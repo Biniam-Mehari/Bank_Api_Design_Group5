@@ -10,7 +10,6 @@ import io.swagger.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +26,9 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.constraints.*;
 import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-05-13T15:15:19.174Z[GMT]")
@@ -183,29 +180,27 @@ public class AccountsApiController implements AccountsApi {
         return new ResponseEntity<AccountResponseDTO>(accountResponseDTO, HttpStatus.OK);
     }
 
-    public ResponseEntity<List<Account>> getAccounts(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = true, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit) {
+    public ResponseEntity<List<AccountResponseDTO>> getAccounts(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = true, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit) {
 
         // getes the data of a user from the token
         User user = loggedInUser();
 
-        Integer toSkip = skip;
-        Integer toLimit = limit;
-        if(toSkip.equals(null))
-            toSkip = 0;
-
-        if(toLimit.equals(null))
-            toLimit=20;
 
         if(!user.getRoles().contains(Role.ROLE_ADMIN)){
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you dont have access");
         }
         List<Account> accounts = accountService.findAllByAccountIdAfterAndAccountIdBefore();
+        List<AccountResponseDTO> accountResponseDTOS = new ArrayList<>();
+        for (Account account: accounts){
+          AccountResponseDTO accountResponseDTO = changeAccoutToAccountResponseDTO(account);
+            accountResponseDTOS.add(accountResponseDTO);
+        }
 
-        accounts = accounts.stream()
-                .skip(toSkip)
-                .limit(toLimit)
+        accountResponseDTOS = accountResponseDTOS.stream()
+                .skip(skip)
+                .limit(limit)
                 .collect(Collectors.toList());
-        return new ResponseEntity<List<Account>>(accounts,HttpStatus.OK);
+        return new ResponseEntity<List<AccountResponseDTO>>(accountResponseDTOS,HttpStatus.OK);
     }
 
 

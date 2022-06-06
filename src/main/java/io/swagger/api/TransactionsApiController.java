@@ -1,7 +1,6 @@
 package io.swagger.api;
 
 import io.swagger.annotations.Api;
-import io.swagger.jwt.JwtTokenProvider;
 import io.swagger.model.*;
 import io.swagger.model.dto.TransactionDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,13 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.constraints.*;
 import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,7 +53,7 @@ public class TransactionsApiController implements TransactionsApi {
         this.request = request;
     }
 
-    public ResponseEntity<List<Transaction>> transactionsGet(
+    public ResponseEntity<List<TransactionResponseDTO>> transactionsGet(
             @Parameter(in = ParameterIn.QUERY, description = "fetch transaction from start date" , required=true,schema=@Schema()) @Valid @RequestParam(value = "startDate", required = true)
             @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
             @Parameter(in = ParameterIn.QUERY, description = "fetch transaction till end date" ,required=true,schema=@Schema())
@@ -83,14 +78,14 @@ public class TransactionsApiController implements TransactionsApi {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "date needs to be in yyyy-MM-dd");
         }
 
-        List<Transaction> transactions = transactionService.getAllTransactions(startdate, enddate);
+        List<TransactionResponseDTO> transactionResponseDTOS = transactionService.getAllTransactions(startdate, enddate);
 
-            transactions = transactions.stream()
+        transactionResponseDTOS = transactionResponseDTOS.stream()
                     .skip(skipValue)
                     .limit(limit)
                     .collect(Collectors.toList());
 
-        return new ResponseEntity<>(transactions, HttpStatus.OK);
+        return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
 
     }
     public ResponseEntity<TransactionResponseDTO> transactionsPost(

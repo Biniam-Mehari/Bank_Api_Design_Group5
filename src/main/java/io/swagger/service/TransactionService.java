@@ -3,19 +3,12 @@ package io.swagger.service;
 import io.swagger.model.*;
 import io.swagger.model.dto.TransactionDTO;
 import io.swagger.model.dto.TransactionResponseDTO;
-import io.swagger.repository.AccountRepository;
 import io.swagger.repository.TransactionRepository;
 import io.swagger.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,8 +22,14 @@ public class TransactionService {
     private UserRepository userRepository;
 
 
-    public List<Transaction> getAllTransactions(LocalDate startdate,LocalDate enddate) {
-        return transactionRepository.findAllByTimestampBetween(startdate, enddate);
+    public List<TransactionResponseDTO> getAllTransactions(LocalDate startdate, LocalDate enddate) {
+        List<Transaction> transactions = transactionRepository.findAllByTimestampBetween(startdate, enddate);
+        List<TransactionResponseDTO> transactionResponseDTOList = new ArrayList<>();
+        for (Transaction transaction: transactions) {
+            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
+            transactionResponseDTOList.add(transactionResponseDTO);
+        }
+        return transactionResponseDTOList;
     }
 
     public Transaction createTransaction(String username, TransactionDTO body) throws Exception {

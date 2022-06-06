@@ -37,7 +37,7 @@ public class AccountService {
 
     public List<Account> findAllByAccountIdAfterAndAccountIdBefore(){
         //return (List<Account>) accountRepository.findAllByAccountIdAfterAndAccountIdBefore(skip,limit);
-        return  accountRepository.findAll();
+        return  accountRepository.findAllByAccountIdGreaterThan(1);
     }
 
     public List<Account> findAllByUserAndAccountType(User user, AccountType accountType) {
