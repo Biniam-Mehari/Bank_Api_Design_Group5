@@ -32,7 +32,7 @@ public class Account{
 
   private Double currentBalance = 0.00;
   private AccountType accountType;
-  private Double absoluteLimit = 0.00;
+  private Double absoluteLimit = 1000.00;
 
   //private Integer userId;
 
@@ -65,9 +65,14 @@ public class Account{
   }
 
   //check valid iban
-  public boolean validateIBAN(String iban){
-
-    return  false;
+  public boolean validateIBAN(String IBAN){
+    // validate IBAN for correct format
+    if(IBAN.substring(0,2).equals("NL") && IBAN.substring(2,4).matches("[0-9]+") && IBAN.substring(4,8).equals("INHO") && IBAN.substring(8,18).matches("[0-9]+")){
+      return true;
+    }
+    else{
+      return false;
+    }
   }
 
 

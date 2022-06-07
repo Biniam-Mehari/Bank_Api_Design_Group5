@@ -161,4 +161,5 @@ public class UserService {
     public String encryptPassword(String password) {
         return passwordEncoder.encode(password);
     }
+
 }

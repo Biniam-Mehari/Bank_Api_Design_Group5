@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,16 +60,20 @@ public class AccountsApiController implements AccountsApi {
         this.request = request;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> accountsIBANDelete(@Size(min = 18, max = 18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required = true, schema = @Schema()) @PathVariable("IBAN") String IBAN) {
         User user = loggedInUser();
+        Account account = new Account();
+        if(!account.validateIBAN(IBAN)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
+        }
         //receiving the account form database
-        Account account = accountService.findByIBAN(IBAN);
+        account = accountService.findByIBAN(IBAN);
 
 
-        if(account.getAccountType().equals(AccountType.bank))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this bank account");
-
-        if(user.getRoles().contains(Role.ROLE_ADMIN) || user.getAccounts().contains(account)){
+        if (account.getAccountId()==1){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"You can not delete the Bank's account");
+        }
             if(account.getAccountType().equals(AccountType.current)){
                 List<Account> savingAccounts = accountService.findAllByUserAndAccountType(account.getUser(),AccountType.saving);
                 if(savingAccounts.isEmpty()){
@@ -81,12 +86,6 @@ public class AccountsApiController implements AccountsApi {
                 accountService.deleteAccount(account);
             }
 
-        }
-        else
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can't delete other users account");
-
-
-
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
@@ -95,11 +94,15 @@ public class AccountsApiController implements AccountsApi {
         User user = loggedInUser();
 
         //receiving the account form database
-        Account account = accountService.findByIBAN(IBAN);
-       AccountResponseDTO accountResponseDTO = changeAccoutToAccountResponseDTO(account);
+        Account account = new Account();
+        if(!account.validateIBAN(IBAN)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
+        }
+        account = accountService.findByIBAN(IBAN);
+
         //check if the user is owner of the account or admin(employee)
         if(user.getRoles().contains(Role.ROLE_ADMIN) || user.getAccounts().contains(account)){
-            return new ResponseEntity<AccountResponseDTO>(accountResponseDTO, HttpStatus.OK);
+            return new ResponseEntity<AccountResponseDTO>(changeAccoutToAccountResponseDTO(account), HttpStatus.OK);
         }
         else
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You dont have authorization to get this account information");
@@ -129,7 +132,11 @@ public class AccountsApiController implements AccountsApi {
             }
         }
         //receiving the account form database
-        Account account = accountService.findByIBAN(IBAN);
+        Account account = new Account();
+        if(!account.validateIBAN(IBAN)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
+        }
+        account = accountService.findByIBAN(IBAN);
 
         if(user != account.getUser()) {
             if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
@@ -156,39 +163,32 @@ public class AccountsApiController implements AccountsApi {
         return new ResponseEntity<List<TransactionResponseDTO>>(transactions, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AccountResponseDTO> createAccount(@Parameter(in = ParameterIn.DEFAULT, description = "New account details", schema = @Schema()) @Valid @RequestBody AccountDTO body) {
-
-        // getes the data of a user from the token
-        User user = loggedInUser();
 
         //initializing object of AccountResponseDto
         AccountResponseDTO accountResponseDTO;
 
-        // check if user is admin
-         if(user.getRoles().contains(Role.ROLE_ADMIN)){
+
             //check if user exist
             User userToCreatAccount = userService.getUserModelById(body.getUserId());
             if(userToCreatAccount.getUserId().equals(null)){
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user does not exist");
             }
             accountResponseDTO = checkAndCreateAccount(userToCreatAccount , body);
-        }
-        else
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can not make account for this user");
+
 
 
         return new ResponseEntity<AccountResponseDTO>(accountResponseDTO, HttpStatus.OK);
     }
 
-    public ResponseEntity<List<AccountResponseDTO>> getAccounts(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = true, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<AccountResponseDTO>> getAccounts(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of accounts", required = true, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of accounts", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit) {
 
         // getes the data of a user from the token
         User user = loggedInUser();
 
 
-        if(!user.getRoles().contains(Role.ROLE_ADMIN)){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you dont have access");
-        }
         List<Account> accounts = accountService.findAllByAccountIdAfterAndAccountIdBefore();
         List<AccountResponseDTO> accountResponseDTOS = new ArrayList<>();
         for (Account account: accounts){
@@ -222,7 +222,12 @@ public class AccountsApiController implements AccountsApi {
     private AccountResponseDTO checkAndCreateAccount(User user ,AccountDTO body){
        // initialize object account
         Account account = new Account();
-        account.setIBAN(account.generateIBAN());
+        String newIban;
+        do {
+             newIban = account.generateIBAN();
+        }while (accountService.findByIBAN(newIban) != null);
+
+        account.setIBAN(newIban);
         account.setUser(userService.getUserModelById(body.getUserId()));
 
         if(!body.getAccountType().toLowerCase().equals(AccountType.current.toString()) && !body.getAccountType().toLowerCase().equals(AccountType.saving.toString())){
@@ -234,12 +239,12 @@ public class AccountsApiController implements AccountsApi {
             if(checkifCurrentAccountExist(user)){
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have current account");
             }
-            account = accountService.createAccount(account);
+            account = accountService.saveAccount(account);
         }
         else{
             List<Account> accounts = accountService.findAllByUserAndAccountType(user,AccountType.current);
             if (!accounts.isEmpty()){
-                account = accountService.createAccount(account);
+                account = accountService.saveAccount(account);
             }
             else
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "To make saving account first you need to make current account");
@@ -261,18 +266,17 @@ public class AccountsApiController implements AccountsApi {
         return accountResponseDTO;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateAbsoluteLimitPost(@Size(min=18,max=18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required=true, schema=@Schema()) @PathVariable("IBAN") String IBAN, @Valid @RequestBody AbsoluteLimitDTO body) {
-        // getes the data of a user from the token
-        User user = loggedInUser();
 
-        if(!user.getRoles().contains(Role.ROLE_ADMIN)){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you dont have access");
+        Account account = new Account();
+        if(!account.validateIBAN(IBAN)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
-
-        Account account = accountService.findByIBAN(IBAN);
+         account = accountService.findByIBAN(IBAN);
         account.setAbsoluteLimit(body.getAbsoluteLimit());
 
-        accountService.createAccount(account);
+        accountService.saveAccount(account);
 
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
@@ -286,22 +290,24 @@ public class AccountsApiController implements AccountsApi {
             @Valid @RequestParam(value = "skip", required = true) Integer skipValue,
             @Valid @RequestParam(value = "limit", required = true) Integer limitValue) {
 
-        Authentication userAuthentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = userAuthentication.getName();
-        User user = userService.getUserByUsername(username);
+        User user = loggedInUser();
 
-        Account userAccount = accountService.findByIBAN(IBAN);
+        Account account = new Account();
+        if(!account.validateIBAN(IBAN)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
+        }
+        account = accountService.findByIBAN(IBAN);
 
         List<TransactionResponseDTO> transactions = new ArrayList<>();
 
         if (operator.equals("<")) {
-            transactions = transactionService.findAllTransactionsLessThanAmount(IBAN, amount);
+            transactions = transactionService.findAllTransactionsLessThanAmount(account.getIBAN(), amount);
         }
         else if (operator.equals(">")) {
-            transactions = transactionService.findAllTransactionsGreaterThanAmount(IBAN, amount);
+            transactions = transactionService.findAllTransactionsGreaterThanAmount(account.getIBAN(), amount);
         }
         else if (operator.equals("=")) {
-            transactions = transactionService.findAllTransactionEqualToAmount(IBAN, amount);
+            transactions = transactionService.findAllTransactionEqualToAmount(account.getIBAN(), amount);
         }
 
         transactions = transactions.stream()
@@ -319,9 +325,7 @@ public class AccountsApiController implements AccountsApi {
             @Valid @RequestParam(value = "skip", required = true) Integer skipValue,
             @Valid @RequestParam(value = "limit", required = true) Integer limitValue) {
 
-        Authentication userAuthentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = userAuthentication.getName();
-        User user = userService.getUserByUsername(username);
+      User user = loggedInUser();
 
         Account userAccount = accountService.findByIBAN(IBAN);
         List<TransactionResponseDTO> transactions = new ArrayList<>();

@@ -32,9 +32,8 @@ public class TransactionService {
         return transactionResponseDTOList;
     }
 
-    public Transaction createTransaction(String username, TransactionDTO body) throws Exception {
+    public Transaction createTransaction(User user, TransactionDTO body) throws Exception {
 
-        User user = userRepository.findByUsername(username);
         Transaction transaction = convertDTOToTransactionEntity(body, user);
         return transactionRepository.save(transaction);
     }

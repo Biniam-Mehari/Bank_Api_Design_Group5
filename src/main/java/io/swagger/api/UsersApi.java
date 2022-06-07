@@ -57,8 +57,7 @@ public interface UsersApi {
     LoginResponseDTO usersLoginPost(@Parameter(in = ParameterIn.DEFAULT, description = "New account details", required=true, schema=@Schema()) @Valid @RequestBody LoginDTO body);
 
 
-    @Operation(summary = "Create user", description = "Adds a user to the system", security = {
-            @SecurityRequirement(name = "bearerAuth")    }, tags={ "employee", "customer" })
+    @Operation(summary = "Create user", description = "Adds a user to the system", tags={ "employee", "customer" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User created", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))),
 
@@ -67,7 +66,7 @@ public interface UsersApi {
             @ApiResponse(responseCode = "404", description = "No users found"),
 
             @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @RequestMapping(value = "/users",
+    @RequestMapping(value = "/users/register",
             produces = { "application/json" },
             consumes = { "application/json" },
             method = RequestMethod.POST)

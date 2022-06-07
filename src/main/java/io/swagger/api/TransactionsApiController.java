@@ -88,6 +88,8 @@ public class TransactionsApiController implements TransactionsApi {
         return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
 
     }
+
+    // creates transaction
     public ResponseEntity<TransactionResponseDTO> transactionsPost(
             @Parameter(in = ParameterIn.DEFAULT, description = "", schema=@Schema())
             @Valid @RequestBody TransactionDTO body) throws Exception {
@@ -102,12 +104,15 @@ public class TransactionsApiController implements TransactionsApi {
         if(body.getFromAccount().equals(body.getToAccount()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "transfer accounts cannot be the same!");
 
-        Authentication userAuthentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = userAuthentication.getName();
-        User user = userService.getUserByUsername(username);
+        //gets information of user loogedin
+        User user = loggedInUser();
 
+        // search for accounts if they exist or not and getting data of account
         Account fromAccount = accountService.findByIBAN(body.getFromAccount());
         Account toAccount = accountService.findByIBAN(body.getToAccount());
+        if (fromAccount==null || toAccount==null){
+            throw  new ResponseStatusException(HttpStatus.NOT_FOUND, "Account does not exist");
+        }
 
 
         if(fromAccount.getUser()!= user) {
@@ -116,13 +121,6 @@ public class TransactionsApiController implements TransactionsApi {
             }
         }
 
-        if(fromAccount.getAccountType().equals(AccountType.bank) || toAccount.getAccountType().equals(AccountType.bank)){
-            if(!(fromAccount.getAccountType().equals(AccountType.bank.toString()) && toAccount.getAccountType().equals(AccountType.current.toString()))
-                    || !(fromAccount.getAccountType().equals(AccountType.current.toString()) && toAccount.getAccountType().equals(AccountType.bank.toString())))
-            {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "You can not transfer from and to the bank to saving account");
-            }
-        }
 
         if(!fromAccount.getAccountType().equals(AccountType.current) || !toAccount.getAccountType().equals(AccountType.current)) {
             if(fromAccount.getAccountType().equals(AccountType.saving) && toAccount.getAccountType().equals(AccountType.saving)){
@@ -132,18 +130,13 @@ public class TransactionsApiController implements TransactionsApi {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "You can not send or receive from saving account and current account of different user");
             }
         }
-        if (fromAccount.getAccountType().equals(AccountType.bank) && user.getRoles().equals(Role.ROLE_USER)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you cannot not authorized to transfer from the bank");
-        }
 
-        if(body.getAmount() <= fromAccount.getAbsoluteLimit()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "you have exceeded your absolute limit!");
-        }
 
-        if (body.getAmount() > user.getDayLimit()) {
+       //check day limit
+        if (body.getAmount() > user.getRemainingDayLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceeded your day limit");
         }
-
+//check transaction limit
         if (body.getAmount() > user.getTransactionLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your trnasction limit");
         }
@@ -156,18 +149,36 @@ public class TransactionsApiController implements TransactionsApi {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "amount to be transferred needs to be greater than zero");
         }
 
-        Double deductBalanceAfterTransaction = fromAccount.getCurrentBalance() - body.getAmount();
-        fromAccount.setCurrentBalance(deductBalanceAfterTransaction);
-        accountService.createAccount(fromAccount);
 
+        //deduct balance
+        Double deductBalanceAfterTransaction = fromAccount.getCurrentBalance() - body.getAmount();
+        //check absolute limit
+        if(deductBalanceAfterTransaction > fromAccount.getAbsoluteLimit()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "you have exceeded your absolute limit!");
+        }
+        fromAccount.setCurrentBalance(deductBalanceAfterTransaction);
+        accountService.saveAccount(fromAccount);
+
+        //update remainingdaylimit
+        User userFromAccount = userService.getUserModelById(fromAccount.getUser().getUserId());
+        userFromAccount.setRemainingDayLimit(userFromAccount.getRemainingDayLimit()-body.getAmount());
+        userService.updateUser(userFromAccount);
+
+        //add balance
         Double addBalanceAfterTransaction = toAccount.getCurrentBalance() + body.getAmount();
         toAccount.setCurrentBalance(addBalanceAfterTransaction);
-        accountService.createAccount(toAccount);
+        accountService.saveAccount(toAccount);
 
 
-       Transaction storeTransaction = transactionService.createTransaction(username, body);
+       Transaction storeTransaction = transactionService.createTransaction(user, body);
        TransactionResponseDTO transactionResponseDTO = transactionService.convertTransactionEntityToTransactionResponseDTO(storeTransaction);
        return new ResponseEntity<TransactionResponseDTO>(transactionResponseDTO, HttpStatus.OK);
+    }
+
+    private User loggedInUser(){
+        Authentication userAuthentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = userAuthentication.getName();
+        return userService.getUserByUsername(username);
     }
 
 

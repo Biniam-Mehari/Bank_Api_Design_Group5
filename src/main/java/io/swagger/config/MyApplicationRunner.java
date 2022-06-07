@@ -35,17 +35,18 @@ public class MyApplicationRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception{
         // Create 1 Employee and 1 Customer
+        User bank = userService.createUser("bank", "bank account", "secret", 1);
         User firstUser = userService.createUser("biniam12", "biniam mehari", "secret", 1);
         User user2 = userService.createUser("tommy12", "tommy king", "secret", 1);
         User user3 = userService.createUser("tommy13", "tommy king", "secret", 0);
         // create a list of user
-        List<User> users = new ArrayList<>(Arrays.asList(firstUser, user2,user3));
+        List<User> users = new ArrayList<>(Arrays.asList(bank,firstUser, user2,user3));
         userRepository.saveAll(users);
         // create 100 dummy users for testing
         userService.create50RandomUsers();
 
         List<Account> accounts = List.of(
-            new Account("NL01INHO0000000001",firstUser, 10000000.00, AccountType.bank),
+            new Account("NL01INHO0000000001",bank, 50.00, AccountType.current),
                 new Account("NL21INHO0123400081",user2, 50.00, AccountType.saving),
                 new Account("NL21INHO0123400001",user2, 75.00, AccountType.current),
                 new Account("NL51INHO0123400001",user3, 75.00, AccountType.current)

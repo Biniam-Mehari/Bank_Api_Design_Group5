@@ -1,5 +1,6 @@
 package io.swagger.repository;
 
+import io.swagger.model.Account;
 import io.swagger.model.Transaction;
 import io.swagger.model.User;
 import org.springframework.data.jpa.repository.Query;
@@ -36,4 +37,6 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
 
     List<Transaction> findAllByFromAccount(String IBAN);
     List<Transaction> findAllByToAccount(String IBAN);
+
+//    List<Transaction> findAllByFromAccountAndToAccount(Account fromAccount, Account toAccount);
 }
