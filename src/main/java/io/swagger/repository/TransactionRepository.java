@@ -37,6 +37,6 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
 
     List<Transaction> findAllByFromAccount(String IBAN);
     List<Transaction> findAllByToAccount(String IBAN);
-    
+
 
 }
