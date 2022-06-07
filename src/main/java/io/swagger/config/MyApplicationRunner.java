@@ -46,10 +46,10 @@ public class MyApplicationRunner implements ApplicationRunner {
         userService.create50RandomUsers();
 
         List<Account> accounts = List.of(
-            new Account("NL01INHO0000000001",bank, 50.00, AccountType.current),
+            new Account("NL01INHO0000000001",bank, 100000000.00, AccountType.current),
                 new Account("NL21INHO0123400081",user2, 50.00, AccountType.saving),
-                new Account("NL21INHO0123400001",user2, 75.00, AccountType.current),
-                new Account("NL51INHO0123400001",user3, 75.00, AccountType.current)
+                new Account("NL21INHO0123400001",user2, 750.00, AccountType.current),
+                new Account("NL51INHO0123400001",user3, 2000.00, AccountType.current)
         );
         accountRepository.saveAll(accounts);
 

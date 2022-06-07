@@ -125,8 +125,10 @@ public class TransactionsApiController implements TransactionsApi {
 
 
         if(fromAccount.getUser()!= user) {
-            if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "this account does not belong to you");
+            if (!(body.getTransactionType().equals("deposit") && fromAccount.getAccountId().equals(1))){
+                if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "this account does not belong to you");
+                }
             }
         }
 
@@ -145,14 +147,12 @@ public class TransactionsApiController implements TransactionsApi {
         if (body.getAmount() > user.getRemainingDayLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceeded your day limit");
         }
-//check transaction limit
+          //check transaction limit
         if (body.getAmount() > user.getTransactionLimit()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your trnasction limit");
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your transction limit");
         }
 
-        if(fromAccount.getCurrentBalance() < body.getAmount()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "insufficient balance! cannot make transaction");
-        }
+
 
         if (body.getAmount() <= 0.00) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "amount to be transferred needs to be greater than zero");
@@ -161,8 +161,9 @@ public class TransactionsApiController implements TransactionsApi {
 
         //deduct balance
         Double deductBalanceAfterTransaction = fromAccount.getCurrentBalance() - body.getAmount();
+
         //check absolute limit
-        if(deductBalanceAfterTransaction > fromAccount.getAbsoluteLimit()) {
+        if(deductBalanceAfterTransaction < fromAccount.getAbsoluteLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "you have exceeded your absolute limit!");
         }
         fromAccount.setCurrentBalance(deductBalanceAfterTransaction);
