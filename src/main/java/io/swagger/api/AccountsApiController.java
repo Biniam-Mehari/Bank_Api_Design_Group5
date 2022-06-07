@@ -297,7 +297,7 @@ public class AccountsApiController implements AccountsApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
         account = accountService.findByIBAN(IBAN);
-
+        account.setIBAN(IBAN);
         List<TransactionResponseDTO> transactions = new ArrayList<>();
 
         if (operator.equals("<")) {
@@ -327,18 +327,24 @@ public class AccountsApiController implements AccountsApi {
 
       User user = loggedInUser();
 
-        Account userAccount = accountService.findByIBAN(IBAN);
+        Account userAccount = new Account();
+        if(!userAccount.validateIBAN(IBAN)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
+        }
+        userAccount = accountService.findByIBAN(IBAN);
+        userAccount.setIBAN(IBAN);
+
         List<TransactionResponseDTO> transactions = new ArrayList<>();
 
         if (accountValue.equals("from")) {
-            transactions = transactionService.findAllTransactionsByFromAccount(IBAN);
+            transactions = transactionService.findAllTransactionsByFromAccount(userAccount.getIBAN());
         }
         else if (accountValue.equals("to")) {
-            transactions = transactionService.findAllTransactionByToAccount(IBAN);
+            transactions = transactionService.findAllTransactionByToAccount(userAccount.getIBAN());
         }
-        else {
-            transactions = transactionService.findAllTransactionsByFromAccount(IBAN);
-            transactions = transactionService.findAllTransactionByToAccount(IBAN);
+        else if (accountValue.equals("all")) {
+            transactions = transactionService.findAllTransactionsByFromAccount(userAccount.getIBAN());
+            transactions = transactionService.findAllTransactionByToAccount(userAccount.getIBAN());
         }
 
         transactions = transactions.stream()

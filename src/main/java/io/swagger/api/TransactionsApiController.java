@@ -108,8 +108,17 @@ public class TransactionsApiController implements TransactionsApi {
         User user = loggedInUser();
 
         // search for accounts if they exist or not and getting data of account
-        Account fromAccount = accountService.findByIBAN(body.getFromAccount());
-        Account toAccount = accountService.findByIBAN(body.getToAccount());
+        Account fromAccount = new Account();
+        Account toAccount = new Account();
+        if (!fromAccount.validateIBAN(body.getFromAccount())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Inavlid IBAN number");
+        }
+        if(!toAccount.validateIBAN(body.getToAccount())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid IBAN number");
+        }
+        fromAccount = accountService.findByIBAN(body.getFromAccount());
+        toAccount = accountService.findByIBAN(body.getToAccount());
+
         if (fromAccount==null || toAccount==null){
             throw  new ResponseStatusException(HttpStatus.NOT_FOUND, "Account does not exist");
         }
