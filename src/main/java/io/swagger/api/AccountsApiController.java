@@ -172,7 +172,7 @@ public class AccountsApiController implements AccountsApi {
 
             //check if user exist
             User userToCreatAccount = userService.getUserModelById(body.getUserId());
-            if(userToCreatAccount.getUserId().equals(null)){
+            if(userToCreatAccount==null){
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user does not exist");
             }
             accountResponseDTO = checkAndCreateAccount(userToCreatAccount , body);
