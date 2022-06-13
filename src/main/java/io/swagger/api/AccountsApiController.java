@@ -167,15 +167,14 @@ public class AccountsApiController implements AccountsApi {
     public ResponseEntity<AccountResponseDTO> createAccount(@Parameter(in = ParameterIn.DEFAULT, description = "New account details", schema = @Schema()) @Valid @RequestBody AccountDTO body) {
 
         //initializing object of AccountResponseDto
-        AccountResponseDTO accountResponseDTO;
-
 
             //check if user exist
             User userToCreatAccount = userService.getUserModelById(body.getUserId());
             if(userToCreatAccount==null){
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user does not exist");
             }
-            accountResponseDTO = checkAndCreateAccount(userToCreatAccount , body);
+
+        AccountResponseDTO   accountResponseDTO = checkAndCreateAccount(userToCreatAccount , body);
 
 
 
@@ -249,9 +248,9 @@ public class AccountsApiController implements AccountsApi {
             else
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "To make saving account first you need to make current account");
         }
-        Account accountRegistered = accountService.findByIBAN(account.getIBAN());
+       // Account accountRegistered = accountService.findByIBAN(account.getIBAN());
 
-        return changeAccoutToAccountResponseDTO(accountRegistered);
+        return changeAccoutToAccountResponseDTO(account);
     }
 
     private AccountResponseDTO changeAccoutToAccountResponseDTO(Account accountRegistered){
