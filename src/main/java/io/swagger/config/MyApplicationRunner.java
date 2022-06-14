@@ -35,6 +35,7 @@ public class MyApplicationRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception{
         // Create 1 Employee and 1 Customer
+        // 1 = Employee, 0 = Customer
         User bank = userService.createUser("bank", "bank account", "secret", 1);
         User admin = userService.createUser("admin", "admin", "secret", 1);
         User user1 = userService.createUser("tommy", "tommy king", "secret", 1);
