@@ -28,6 +28,7 @@ public class Transaction   {
   @Id
   @SequenceGenerator(name = "transaction_seq", initialValue = 1)
   @GeneratedValue(generator = "transaction_seq", strategy = GenerationType.SEQUENCE)
+  @Column
   private Integer transactionId;
   @ManyToOne
   private User userPerforming;

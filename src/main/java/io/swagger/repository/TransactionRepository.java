@@ -3,9 +3,12 @@ package io.swagger.repository;
 import io.swagger.model.Account;
 import io.swagger.model.Transaction;
 import io.swagger.model.User;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,7 +24,7 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
     List<Transaction> getTransactionByFromAccountAndTimestampBetween(String fromAccount, LocalDate dateFrom, LocalDate dateTo);
 
     //return all transactions between from date and to date
-    List<Transaction> findAllByTimestampBetween(LocalDate fromDate,LocalDate toDate);
+    List<Transaction> findAllByTimestampBetween(LocalDate fromDate, LocalDate toDate);
 
     // return all transactions by Amount range greater then given amount
     List<Transaction> findAllByAmountGreaterThanAndFromAccount(Double amount, String IBAN);
