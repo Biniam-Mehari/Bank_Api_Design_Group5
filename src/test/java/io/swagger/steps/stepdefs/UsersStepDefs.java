@@ -32,34 +32,8 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
 
     public UsersStepDefs() {
 
-        Given("^I have a valid token for role \"([^\"]*)\"$", (String role) -> {
-            if (role == "user") {
-                token = VALID_TOKEN_USER;
-            }
-        });
-
-        When("I call get all users endpoint", () -> {
-            httpHeaders.clear();
-            httpHeaders.add("Authorization",  "Bearer " + token);
-            request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "bankAPI/users", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
-            status = response.getStatusCodeValue();
-        });
-
-        Then("^I recieve a status code of (\\d+)$", (Integer code) -> {
-            Assertions.assertEquals(code, status);
-        });
-
-        Given("^When I get user by Id (\\d+)$", (Integer id) -> {
-            httpHeaders.clear();
-            httpHeaders.add("Authorization",  "Bearer " + token);
-            request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "bankAPI/users/" + id, HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
-            status = response.getStatusCodeValue();
-        });
-        Given("^I have an invalid token for role \"([^\"]*)\"$", (String token) -> {
+        Given("^I have an invalid token for role \"([^\"]*)\"$", (String arg0) -> {
             token = INVALID_TOKEN;
         });
-
     }
 }
