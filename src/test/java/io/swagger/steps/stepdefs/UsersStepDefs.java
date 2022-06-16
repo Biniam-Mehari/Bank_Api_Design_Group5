@@ -1,53 +1,50 @@
 package io.swagger.steps.stepdefs;
-
-
+import io.cucumber.core.internal.com.fasterxml.jackson.core.JsonProcessingException;
 import io.cucumber.core.internal.com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.cucumber.java8.En;
-import io.swagger.service.UserService;
-import io.swagger.steps.BaseStepDefinations;
-import org.junit.jupiter.api.Assertions;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import io.swagger.model.dto.LoginDTO;
+import io.swagger.model.dto.LoginResponseDTO;
+import org.junit.Assert;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
-public class UsersStepDefs extends BaseStepDefinations implements En {
+public class UsersStepDefs {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYmhpc2hlayIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNjU1MjEwNzYyLCJleHAiOjE2NTUyMTQzNjJ9.HyB9tt_RbxjTX72CwfJAGICDUCV26Ol76U_HjdhbV-U";
-    private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0b21teSIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1MzkyMzk5LCJleHAiOjE2NTUzOTU5OTl9.fmWtNCJ-LXlg0KcABwZRtyVvY45rs2LoCygQKA_72NU";
-    private static final String INVALID_TOKEN = "invalidtoken";
+    RestTemplate restTemplate = new RestTemplate();
 
-    private final HttpHeaders httpHeaders = new HttpHeaders();
-    private final TestRestTemplate restTemplate = new TestRestTemplate();
+    HttpHeaders headers = new HttpHeaders();
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    ResponseEntity<String> responseEntity;
 
-    private ResponseEntity<String> response;
-    private HttpEntity<String> request;
-    private Integer status;
+    String response;
 
-    private String token = null;
 
-    private UserService userService;
 
-    public UsersStepDefs() {
+    String baseURL = "http://localhost:8089/bankAPI/users";
 
-        When("^I receive all users$", () -> {
-            httpHeaders.clear();
-            httpHeaders.add("Authorization",  "Bearer " + VALID_TOKEN_ADMIN);
-            request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "/bankAPI/users", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
-            status = response.getStatusCodeValue();
-        });
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-        Then("^I get http status (\\d+)$", (Integer code) -> {
-            Assertions.assertEquals(code, status);
-        });
+    String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0b21teSIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NDIzNzI1LCJleHAiOjE2NTU0MjczMjV9.tu6eIW484hWOlR5u2HYrZDkyWvWQLGpBakpWCBqfx0w";
+    private int status;
 
+    @When("I receive all users")
+    public void iReceiveAllUsers() throws URISyntaxException {
+        headers.clear();
+        headers.add("Authorization",  "Bearer " + VALID_TOKEN_ADMIN);
+
+        URI uri = new URI(baseURL);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+        responseEntity = restTemplate.exchange(uri, HttpMethod.GET ,entity ,String.class);
+        status = responseEntity.getStatusCodeValue();
+    }
+
+    @Then("I get http status {int}")
+    public void iGetHttpStatus(int code) {
+        Assert.assertEquals(status, code);
     }
 }
