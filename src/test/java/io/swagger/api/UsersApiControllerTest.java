@@ -1,8 +1,8 @@
-package io.swagger.test;
+package io.swagger.api;
 
+import io.swagger.jwt.JwtTokenProvider;
 import io.swagger.model.Role;
 import io.swagger.model.User;
-import io.swagger.repository.UserRepository;
 import io.swagger.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +28,8 @@ class UsersApiControllerTest {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private UserRepository userRepository;
+    private JwtTokenProvider jwtTokenProvider;
+
 
     @BeforeEach
     public void setup() {
@@ -56,5 +58,18 @@ class UsersApiControllerTest {
     public void canCreateANewUser() {
         User user = userService.createUser("pat", "Patrick Jane", "pat123", 0);
         assertEquals(user.getUsername(), testuser1.getUsername());
+    }
+
+    @Test
+    public void checkIfUserGetsBackALoginTokenOrNot() {
+        String token = jwtTokenProvider.createToken(testuser1.getUsername(), testuser1.getRoles());
+        assertNotNull(token);
+    }
+
+    @Test
+    public void canGetAllUsersByFiltering() {
+        // maybe can use pageable here
+        List<User> users = userService.getAllUsers(0, 10, 0);
+        assertNotNull(users);
     }
 }
