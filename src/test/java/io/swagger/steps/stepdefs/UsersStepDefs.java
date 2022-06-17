@@ -10,8 +10,8 @@ import org.springframework.http.*;
 
 public class UsersStepDefs extends BaseStepDefinations implements En {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYmhpc2hlayIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNjU1NDc0MDQ5LCJleHAiOjE2NTU0Nzc2NDl9.hq24dzQisOrKhcuKWzzH1J8q2KSMzDgMjNGJldFFlKc";
-    private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0b21teSIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NDcyOTkyLCJleHAiOjE2NTU0NzY1OTJ9.6TXIsi-Iwr52RDR2JGgpmczfeHNbA2PNVGLR_hFZOok";
+    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTQ5NDA3MCwiZXhwIjoxNjU1NDk3NjcwfQ.4GrULuO29SO6WsLQj9alXk5s10Tjn_ZEfRDdXa_e47o";
+    private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJiaW5pYW0iLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifSx7ImF1dGhvcml0eSI6IlJPTEVfQURNSU4ifV0sImlhdCI6MTY1NTQ5MjkxMCwiZXhwIjoxNjU1NDk2NTEwfQ.hA0knzD3ftwc3gHuB_p603SWUbxMpNJZg3-4ZKQoBrY";
     private static final String INVALID_TOKEN = "invalidtoken";
 
     private final HttpHeaders httpHeaders = new HttpHeaders();
@@ -28,6 +28,10 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
     private UserService userService;
 
     public UsersStepDefs() {
+
+        Given("^I have an invalid token for role \"([^\"]*)\"$", (String token) -> {
+            token = INVALID_TOKEN;
+        });
 
         When("I call get all users endpoint", () -> {
             httpHeaders.clear();
@@ -48,9 +52,8 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
             response = restTemplate.exchange(getBaseUrl() + "bankAPI/users/" + id, HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
             status = response.getStatusCodeValue();
         });
-        Given("^I have an invalid token for role \"([^\"]*)\"$", (String token) -> {
-            token = INVALID_TOKEN;
-        });
+
+
 
         When("^I call get total balance of user by Id (\\d+)$", (Integer id) -> {
             httpHeaders.clear();
@@ -73,6 +76,15 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
             request = new HttpEntity<>(null, httpHeaders);
             response = restTemplate.exchange(getBaseUrl() + "/bankAPI/users", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
             status = response.getStatusCodeValue();
+        });
+        Given("^kvsdnvknsdv$", () -> {
+            // isdhvjd
+        });
+        Given("^I am abhishek$", () -> {
+            // hghjgh
+        });
+        When("^hjjlk$", () -> {
+            //kjhkj
         });
 
 
