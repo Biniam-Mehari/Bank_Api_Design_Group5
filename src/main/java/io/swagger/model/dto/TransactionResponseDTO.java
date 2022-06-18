@@ -5,9 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.java.Log;
-
-import javax.persistence.ManyToOne;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -21,6 +19,6 @@ public class TransactionResponseDTO {
     private String toAccount;
     private Double amount;
     private String transactionType;
-    private LocalDate timestamp;
+    private LocalDateTime timestamp;
 
 }

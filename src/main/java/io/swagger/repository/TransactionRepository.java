@@ -15,13 +15,14 @@ import java.util.List;
 public interface TransactionRepository extends CrudRepository<Transaction, Integer> {
 
     // get all transactions with toAccount between two dates
-    List<Transaction> getTransactionByToAccountAndTimestampBetween(String toAccount, LocalDate dateFrom, LocalDate dateTo);
+    List<Transaction> getTransactionByToAccountAndTimestampBetween(String toAccount, LocalDateTime dateFrom, LocalDateTime dateTo);
 
     // get all transactions with fromAccount between two dates
-    List<Transaction> getTransactionByFromAccountAndTimestampBetween(String fromAccount, LocalDate dateFrom, LocalDate dateTo);
+    List<Transaction> getTransactionByFromAccountAndTimestampBetween(String fromAccount, LocalDateTime dateFrom, LocalDateTime dateTo);
 
+    //List<Transaction> getTransactionByFromAccountAndToAccountAndTimestampBetween(String fromAccount, String toAccount, LocalDate dateFrom);
     //return all transactions between from date and to date
-    List<Transaction> findAllByTimestampBetween(LocalDate fromDate,LocalDate toDate);
+    List<Transaction> findAllByTimestampBetween(LocalDateTime fromDate,LocalDateTime toDate);
 
     // return all transactions by Amount range greater then given amount
     List<Transaction> findAllByAmountGreaterThanAndFromAccount(Double amount, String IBAN);

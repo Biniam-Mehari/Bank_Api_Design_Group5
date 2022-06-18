@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +32,7 @@ public class TransactionService {
     private UserRepository userRepository;
 
 
-    public List<Transaction> getAllTransactions(Integer skip, Integer limit, LocalDate startdate, LocalDate enddate) {
+    public List<Transaction> getAllTransactions(Integer skip, Integer limit, LocalDateTime startdate, LocalDateTime enddate) {
         List<Transaction> transactions = transactionRepository.findAllByTimestampBetween(startdate, enddate);
 
         return filterTransactionsByPagination(skip, limit, transactions);
@@ -71,6 +74,7 @@ public class TransactionService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "You cannot send or receive from saving account and current account of different user");
             }
         }
+
         deductMoneyFromAccountAndUpdateBalance(fromAccount, body, user);
 
         //User userFromAccount = userRepository.getUserModelById(fromAccount.getUser().getUserId());
@@ -120,12 +124,14 @@ public class TransactionService {
         transaction.setFromAccount(body.getFromAccount());
         transaction.setToAccount(body.getToAccount());
         transaction.setAmount(body.getAmount());
-        transaction.setTimestamp(LocalDate.now());
+
+        LocalDateTime todayDatetime = LocalDateTime.now();
+        transaction.setTimestamp(todayDatetime.truncatedTo(ChronoUnit.SECONDS));
         transaction.setUserPerforming(user);
         return transaction;
     }
 
-    public List<TransactionResponseDTO>  findAllTransactionsByIBANAccount(String iban, LocalDate datefrom, LocalDate dateto) {
+    public List<TransactionResponseDTO>  findAllTransactionsByIBANAccount(String iban, LocalDateTime datefrom, LocalDateTime dateto) {
 
         List<Transaction> transactions = new ArrayList<>();
         List<TransactionResponseDTO> transactionResponseDTOList = new ArrayList<>();

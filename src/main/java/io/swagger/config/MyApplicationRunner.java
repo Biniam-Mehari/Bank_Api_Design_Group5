@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -61,24 +62,26 @@ public class MyApplicationRunner implements ApplicationRunner {
         accountRepository.saveAll(accounts);
 
         // Integer userPerformingId, String fromAccount, String toAccount, Double amount, String transactionType, java.time.LocalDateTime timestamp, Double balanceAfterTransfer
-        String str1 = "2022-04-03";
-        String str2 = "2022-05-27";
-        String str3 = "2022-05-27";
-        String str4 = "2024-05-27";
-        String str5 = "2024-05-27";
-        String str6 = "2022-05-26";
-        String str7 = "2022-05-26";
-        String str8 = "2023-05-27";
-        String str9 = "2023-05-27";
-        LocalDate dateTime1 =  LocalDate.parse(str1);
-        LocalDate dateTime2 = LocalDate.parse(str2);
-        LocalDate dateTime3 = LocalDate.parse(str3);
-        LocalDate dateTime4 =  LocalDate.parse(str4);
-        LocalDate dateTime5 = LocalDate.parse(str5);
-        LocalDate dateTime6 = LocalDate.parse(str6);
-        LocalDate dateTime7 =  LocalDate.parse(str7);
-        LocalDate dateTime8 = LocalDate.parse(str8);
-        LocalDate dateTime9 = LocalDate.parse(str9);
+        String str1 = "2022-04-03 10:25:57";
+        String str2 = "2022-05-27 16:27:39";
+        String str3 = "2022-05-27 04:55:23";
+        String str4 = "2024-05-27 14:36:25";
+        String str5 = "2024-05-27 14:52:50";
+        String str6 = "2022-05-26 23:04:03";
+        String str7 = "2022-05-26 02:38:07";
+        String str8 = "2023-05-27 22:32:17";
+        String str9 = "2023-05-27 03:08:15";
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime dateTime1 =  LocalDateTime.parse(str1, formatter);
+        LocalDateTime dateTime2 = LocalDateTime.parse(str2, formatter);
+        LocalDateTime dateTime3 = LocalDateTime.parse(str3, formatter);
+        LocalDateTime dateTime4 =  LocalDateTime.parse(str4, formatter);
+        LocalDateTime dateTime5 = LocalDateTime.parse(str5, formatter);
+        LocalDateTime dateTime6 = LocalDateTime.parse(str6, formatter);
+        LocalDateTime dateTime7 =  LocalDateTime.parse(str7, formatter);
+        LocalDateTime dateTime8 = LocalDateTime.parse(str8, formatter);
+        LocalDateTime dateTime9 = LocalDateTime.parse(str9, formatter);
 
         List<Transaction> transactions = List.of(
                 new Transaction(user2, "NL21INHO0123400789", "NL21INHO0123400081", 1900.00, TransactionType.transfer, dateTime1),

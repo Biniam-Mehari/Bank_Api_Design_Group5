@@ -28,6 +28,7 @@ import javax.validation.constraints.*;
 import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -143,11 +144,11 @@ public class AccountsApiController implements AccountsApi {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to see this transaction");
             }
         }
-        LocalDate startdate;
-        LocalDate enddate;
+        LocalDateTime startdate;
+        LocalDateTime enddate;
         try {
-            startdate = LocalDate.parse(startDate);
-            enddate = LocalDate.parse(endDate);
+            startdate = LocalDateTime.parse(startDate);
+            enddate = LocalDateTime.parse(endDate);
         }
         catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid date format, needs to be in yyyy-MM-dd");
