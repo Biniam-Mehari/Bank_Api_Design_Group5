@@ -96,18 +96,7 @@ public class TransactionsApiController implements TransactionsApi {
 
     }
 
-    public TransactionResponseDTO convertTransactionEntityToTransactionResponseDTO(Transaction storeTransaction) {
 
-        TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
-        transactionResponseDTO.setTransactionId(storeTransaction.getTransactionId());
-        transactionResponseDTO.setUserPerformingId(storeTransaction.getUserPerforming().getUserId());
-        transactionResponseDTO.setFromAccount(storeTransaction.getFromAccount());
-        transactionResponseDTO.setToAccount(storeTransaction.getToAccount());
-        transactionResponseDTO.setAmount(storeTransaction.getAmount());
-        transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
-        transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
-        return transactionResponseDTO;
-    }
 
     // creates transaction
     public ResponseEntity<TransactionResponseDTO> transactionsPost(
@@ -124,11 +113,37 @@ public class TransactionsApiController implements TransactionsApi {
         if(body.getFromAccount().equals(body.getToAccount()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "transfer accounts cannot be the same!");
 
-        User user = loggedInUser();
+       User user = loggedInUser();
+       //Transaction storeTransaction = transactionService.createTransaction(user, body);
+       Transaction transaction = convertTransactionDTOToTransactionEntity(body);
+       Transaction createTransaction = transactionService.createTransaction2(user, transaction);
 
-       Transaction storeTransaction = transactionService.createTransaction(user, body);
-       TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(storeTransaction);
+       TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(createTransaction);
        return new ResponseEntity<TransactionResponseDTO>(transactionResponseDTO, HttpStatus.OK);
+    }
+
+    public Transaction convertTransactionDTOToTransactionEntity(TransactionDTO transactionDTO) {
+
+        Transaction transaction = new Transaction();
+        transaction.setFromAccount(transactionDTO.getFromAccount());
+        transaction.setToAccount(transactionDTO.getToAccount());
+        transaction.setAmount(transactionDTO.getAmount());
+        transaction.setTransactionType(TransactionType.valueOf(transactionDTO.getTransactionType()));
+
+        return transaction;
+    }
+
+    public TransactionResponseDTO convertTransactionEntityToTransactionResponseDTO(Transaction storeTransaction) {
+
+        TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
+        transactionResponseDTO.setTransactionId(storeTransaction.getTransactionId());
+        transactionResponseDTO.setUserPerformingId(storeTransaction.getUserPerforming().getUserId());
+        transactionResponseDTO.setFromAccount(storeTransaction.getFromAccount());
+        transactionResponseDTO.setToAccount(storeTransaction.getToAccount());
+        transactionResponseDTO.setAmount(storeTransaction.getAmount());
+        transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
+        transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
+        return transactionResponseDTO;
     }
 
 

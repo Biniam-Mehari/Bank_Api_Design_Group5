@@ -25,7 +25,7 @@ public class TransactionService {
     private TransactionRepository transactionRepository;
 
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -41,7 +41,7 @@ public class TransactionService {
         return filterTransactionsByPagination(offset, limit, transactions);
     }
 
-    public Transaction createTransaction(User user, TransactionDTO body) {
+    /*public Transaction createTransaction(User user, TransactionDTO body) {
 
         Account fromAccount = new Account();
         Account toAccount = new Account();
@@ -87,9 +87,56 @@ public class TransactionService {
 
         Transaction transaction = convertDTOToTransactionEntity(body, user);
         return transactionRepository.save(transaction);
+    }*/
+
+    public Transaction createTransaction2(User user, Transaction body) {
+
+        Account fromAccount = new Account();
+        Account toAccount = new Account();
+
+        if (!fromAccount.validateIBAN(body.getFromAccount())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid IBAN number");
+        }
+
+        if (!toAccount.validateIBAN(body.getToAccount())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid IBAN number");
+        }
+        fromAccount = accountRepository.findByIBAN(body.getFromAccount());
+        toAccount = accountRepository.findByIBAN(body.getToAccount());
+
+        if (fromAccount == null || toAccount == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
+        }
+
+        if(fromAccount.getUser()!= user) {
+            if (!(body.getTransactionType().equals("deposit") && fromAccount.getAccountId().equals(1))){
+                if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "this account does not belong to you");
+                }
+            }
+        }
+
+        if(!fromAccount.getAccountType().equals(AccountType.current) || !toAccount.getAccountType().equals(AccountType.current)) {
+            if(fromAccount.getAccountType().equals(AccountType.saving) && toAccount.getAccountType().equals(AccountType.saving)){
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "you cannot send or receive from a saving account to a saving account");
+            }
+            if(fromAccount.getUser() != toAccount.getUser()){
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You cannot send or receive from saving account and current account of different user");
+            }
+        }
+
+        updatefromAccountBalance(fromAccount, body, user);
+
+        User userFromAccount = userRepository.findById(fromAccount.getUser().getUserId()).orElse(null);
+        userFromAccount.setRemainingDayLimit(userFromAccount.getRemainingDayLimit()-body.getAmount());
+        userRepository.save(userFromAccount);
+
+        addMoneyToAccount(toAccount, body);
+
+        return transactionRepository.save(body);
     }
 
-    public void updatefromAccountBalance(Account fromAccount, TransactionDTO transactionDTO, User user) {
+    public void updatefromAccountBalance(Account fromAccount, Transaction transactionDTO, User user) {
 
         if (transactionDTO.getAmount() > user.getRemainingDayLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your day limit");
@@ -114,7 +161,7 @@ public class TransactionService {
         accountRepository.save(fromAccount);
     }
 
-    public void addMoneyToAccount(Account toAccount, TransactionDTO transactionDTO) {
+    public void addMoneyToAccount(Account toAccount, Transaction transactionDTO) {
         Double addBalanceAfterTransaction = toAccount.getCurrentBalance() + transactionDTO.getAmount();
         toAccount.setCurrentBalance(addBalanceAfterTransaction);
         accountRepository.save(toAccount);
