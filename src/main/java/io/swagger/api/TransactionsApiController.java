@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,35 +59,38 @@ public class TransactionsApiController implements TransactionsApi {
             @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
             @Parameter(in = ParameterIn.QUERY, description = "fetch transaction till end date" ,required=true,schema=@Schema())
             @Valid @RequestParam(value = "endDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") String endDate,
-            @Valid @RequestParam(value = "skip", required = false, defaultValue="0") Integer skipValue,
-            @Valid @RequestParam(value = "limit", required = false, defaultValue = "50") Integer limit) {
+            @Valid @RequestParam(value = "skip", required = false) Integer skipValue,
+            @Valid @RequestParam(value = "limit", required = false) Integer limit) {
 
-
-        Authentication userAuthentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = userAuthentication.getName();
-        User user = userService.getUserByUsername(username);
-
+        User user = loggedInUser();
         if(!user.getRoles().contains(Role.ROLE_ADMIN)){
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to acces this list");
         }
+
         LocalDate startdate;
         LocalDate enddate;
-        try{
+
+        try {
             startdate = LocalDate.parse(startDate);
             enddate = LocalDate.parse(endDate);
-        }catch (Exception ex){
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "date needs to be in yyyy-MM-dd");
+        }
+        catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "date needs to be in format yyyy-MM-dd");
         }
 
-        List<TransactionResponseDTO> transactionResponseDTOS = transactionService.getAllTransactions(startdate, enddate);
+        if (skipValue == null && limit == null) {
+            skipValue = 0;
+            limit = 10;
+        }
 
-        transactionResponseDTOS = transactionResponseDTOS.stream()
-                    .skip(skipValue)
-                    .limit(limit)
-                    .collect(Collectors.toList());
+       List<Transaction> transactions = transactionService.getAllTransactions(skipValue, limit, startdate, enddate);
+       List<TransactionResponseDTO> transactionResponseDTOList = new ArrayList<>();
 
-        return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
-
+        for (Transaction transaction: transactions) {
+            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
+            transactionResponseDTOList.add(transactionResponseDTO);
+        }
+        return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOList, HttpStatus.OK);
     }
 
     // creates transaction
@@ -107,81 +111,8 @@ public class TransactionsApiController implements TransactionsApi {
         //gets information of user loogedin
         User user = loggedInUser();
 
-        // search for accounts if they exist or not and getting data of account
-        Account fromAccount = new Account();
-        Account toAccount = new Account();
-        if (!fromAccount.validateIBAN(body.getFromAccount())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Inavlid IBAN number");
-        }
-        if(!toAccount.validateIBAN(body.getToAccount())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid IBAN number");
-        }
-        fromAccount = accountService.findByIBAN(body.getFromAccount());
-        toAccount = accountService.findByIBAN(body.getToAccount());
-
-        if (fromAccount==null || toAccount==null){
-            throw  new ResponseStatusException(HttpStatus.NOT_FOUND, "Account does not exist");
-        }
-
-
-        if(fromAccount.getUser()!= user) {
-            if (!(body.getTransactionType().equals("deposit") && fromAccount.getAccountId().equals(1))){
-                if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
-                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "this account does not belong to you");
-                }
-            }
-        }
-
-
-        if(!fromAccount.getAccountType().equals(AccountType.current) || !toAccount.getAccountType().equals(AccountType.current)) {
-            if(fromAccount.getAccountType().equals(AccountType.saving) && toAccount.getAccountType().equals(AccountType.saving)){
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "you can send or receive from a saving account to a saving account");
-            }
-            if(fromAccount.getUser() != toAccount.getUser()){
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "You can not send or receive from saving account and current account of different user");
-            }
-        }
-
-
-       //check day limit
-        if (body.getAmount() > user.getRemainingDayLimit()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceeded your day limit");
-        }
-          //check transaction limit
-        if (body.getAmount() > user.getTransactionLimit()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your transction limit");
-        }
-
-
-
-        if (body.getAmount() <= 0.00) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "amount to be transferred needs to be greater than zero");
-        }
-
-
-        //deduct balance
-        Double deductBalanceAfterTransaction = fromAccount.getCurrentBalance() - body.getAmount();
-
-        //check absolute limit
-        if(deductBalanceAfterTransaction < fromAccount.getAbsoluteLimit()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "you have exceeded your absolute limit!");
-        }
-        fromAccount.setCurrentBalance(deductBalanceAfterTransaction);
-        accountService.saveAccount(fromAccount);
-
-        //update remainingdaylimit
-        User userFromAccount = userService.getUserModelById(fromAccount.getUser().getUserId());
-        userFromAccount.setRemainingDayLimit(userFromAccount.getRemainingDayLimit()-body.getAmount());
-        userService.updateUser(userFromAccount);
-
-        //add balance
-        Double addBalanceAfterTransaction = toAccount.getCurrentBalance() + body.getAmount();
-        toAccount.setCurrentBalance(addBalanceAfterTransaction);
-        accountService.saveAccount(toAccount);
-
-
        Transaction storeTransaction = transactionService.createTransaction(user, body);
-       TransactionResponseDTO transactionResponseDTO = transactionService.convertTransactionEntityToTransactionResponseDTO(storeTransaction);
+       TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(storeTransaction);
        return new ResponseEntity<TransactionResponseDTO>(transactionResponseDTO, HttpStatus.OK);
     }
 
@@ -190,6 +121,21 @@ public class TransactionsApiController implements TransactionsApi {
         String username = userAuthentication.getName();
         return userService.getUserByUsername(username);
     }
+
+    public TransactionResponseDTO convertTransactionEntityToTransactionResponseDTO(Transaction storeTransaction) {
+
+        TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
+        transactionResponseDTO.setTransactionId(storeTransaction.getTransactionId());
+        transactionResponseDTO.setUserPerformingId(storeTransaction.getUserPerforming().getUserId());
+        transactionResponseDTO.setFromAccount(storeTransaction.getFromAccount());
+        transactionResponseDTO.setToAccount(storeTransaction.getToAccount());
+        transactionResponseDTO.setAmount(storeTransaction.getAmount());
+        transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
+        transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
+        return transactionResponseDTO;
+    }
+
+
 
 
 }
