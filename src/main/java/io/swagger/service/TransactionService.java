@@ -7,6 +7,8 @@ import io.swagger.repository.AccountRepository;
 import io.swagger.repository.TransactionRepository;
 import io.swagger.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -131,14 +133,20 @@ public class TransactionService {
         return transaction;
     }
 
-    public List<TransactionResponseDTO>  findAllTransactionsByIBANAccount(String iban, LocalDateTime datefrom, LocalDateTime dateto) {
+    public List<TransactionResponseDTO>  findAllTransactionsByIBANAccount(String iban, LocalDateTime datefrom, LocalDateTime dateto, Integer page, Integer limit) {
 
         List<Transaction> transactions = new ArrayList<>();
         List<TransactionResponseDTO> transactionResponseDTOList = new ArrayList<>();
 
-        transactions.addAll(transactionRepository.getTransactionByFromAccountAndTimestampBetween(iban, datefrom, dateto));
-        transactions.addAll(transactionRepository.getTransactionByToAccountAndTimestampBetween(iban, datefrom, dateto));
+//        transactions.addAll(transactionRepository.getTransactionByFromAccountAndTimestampBetween(iban, datefrom, dateto));
+//        transactions.addAll(transactionRepository.getTransactionByToAccountAndTimestampBetween(iban, datefrom, dateto));
 
+        Pageable pageable = PageRequest.of(page, limit);
+        //List<User> usersList = userRepository.findAll(pageable).getContent();
+        List<Transaction> temp = transactionRepository.filterTransaction(iban, datefrom, dateto, pageable);
+        transactions.addAll(temp);
+
+        //transactions.addAll(transactionRepository.findAllByIban(iban, datefrom, dateto));
         for (Transaction transaction: transactions) {
              TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
              transactionResponseDTOList.add(transactionResponseDTO);

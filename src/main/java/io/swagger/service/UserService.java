@@ -9,6 +9,10 @@ import io.swagger.model.dto.UserResponseDTO;
 import io.swagger.repository.AccountRepository;
 import io.swagger.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +20,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,11 +63,10 @@ public class UserService {
         user.setUsername(userDTO.getUsername());
         user.setFullname(userDTO.getFullname());
         user.setPassword(securityConfig.passwordEncoder().encode(userDTO.getPassword()));
-        if (userDTO.getCreateEmployee() == 1){
+        if (userDTO.getCreateEmployee() == 1) {
             // Only admin can set createEmployee property to 1 in the UI
             user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));
-        }
-        else {
+        } else {
             user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));
         }
         UserResponseDTO userResponseDTO = new UserResponseDTO();
@@ -96,7 +100,19 @@ public class UserService {
             // find users with no connected account
             return userRepository.findAllByAccountsIsNull();
         }
-        return userRepository.findAllByUserIdAfterAndUserIdIsBefore(skip, (skip + limit + 1));
+        // Pagination using Pageable
+//        Double division = (double) skip / limit;
+//        Integer pageNumber = division.intValue();
+//        Pageable pageable = PageRequest.of(pageNumber, limit);
+//        List<User> usersList = userRepository.findAll(pageable).getContent();
+        // Pagination using custom query
+        List<User> usersList = userRepository.findAllUsers(limit, skip);
+
+        // check if list is empty
+        if (usersList.isEmpty()) {
+            return null;
+        }
+        return usersList;
     }
 
     public List<UserResponseDTO> convertUsersToUserResponseDTO(List<User> users) {
@@ -154,7 +170,7 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    public void updateUser(User user){
+    public void updateUser(User user) {
         userRepository.save(user);
     }
 

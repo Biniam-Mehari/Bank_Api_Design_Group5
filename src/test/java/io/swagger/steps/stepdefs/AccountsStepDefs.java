@@ -13,8 +13,8 @@ import org.springframework.http.ResponseEntity;
 
 public class AccountsStepDefs extends BaseStepDefinations implements En {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYmhpc2hlayIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNjU1MjEwNzYyLCJleHAiOjE2NTUyMTQzNjJ9.HyB9tt_RbxjTX72CwfJAGICDUCV26Ol76U_HjdhbV-U";
-    private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0b21teSIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NDcyOTkyLCJleHAiOjE2NTU0NzY1OTJ9.6TXIsi-Iwr52RDR2JGgpmczfeHNbA2PNVGLR_hFZOok";
+    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTY2NjM4NCwiZXhwIjoxNjU1NjY5OTg0fQ.7C7I2xMVVxDvixMJY0s8b3UqyXCAT-WYgDZ1kDkJOUM";
+    private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NjY3NTk0LCJleHAiOjE2NTYyNzIzOTR9.XI7nat8c9C1oxrLkFydif3C6qtdzIIg6OGoiRcjLr6E";
     private static final String INVALID_TOKEN = "invalidtoken";
 
     private final HttpHeaders httpHeaders = new HttpHeaders();

@@ -155,7 +155,7 @@ public class AccountsApiController implements AccountsApi {
         }
 
         List<TransactionResponseDTO> transactions = transactionService.
-                findAllTransactionsByIBANAccount(IBAN, startdate, enddate);
+                findAllTransactionsByIBANAccount(IBAN, startdate, enddate, skipValue, limitValue);
 
         transactions = transactions.stream()
                 .skip(skipValue)

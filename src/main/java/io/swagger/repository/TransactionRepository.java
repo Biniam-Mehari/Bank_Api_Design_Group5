@@ -3,6 +3,7 @@ package io.swagger.repository;
 import io.swagger.model.Account;
 import io.swagger.model.Transaction;
 import io.swagger.model.User;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +23,11 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
 
     //List<Transaction> getTransactionByFromAccountAndToAccountAndTimestampBetween(String fromAccount, String toAccount, LocalDate dateFrom);
     //return all transactions between from date and to date
+
     List<Transaction> findAllByTimestampBetween(LocalDateTime fromDate,LocalDateTime toDate);
+
+    @Query(value = "SELECT * from Transaction WHERE from_Account =:IBAN Or to_Account =:IBAN AND timestamp between :startDate and :endDate", nativeQuery = true)
+            List<Transaction> filterTransaction(String IBAN, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     // return all transactions by Amount range greater then given amount
     List<Transaction> findAllByAmountGreaterThanAndFromAccount(Double amount, String IBAN);
@@ -39,5 +44,8 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
     List<Transaction> findAllByFromAccount(String IBAN);
     List<Transaction> findAllByToAccount(String IBAN);
 
-
+    // get all transactions with fromAccount and toAccount by timestamp and limit and offset
+//    @Query(value = "SELECT * FROM transaction WHERE from_account = ?1 AND to_account = ?2 AND timestamp BETWEEN ?3 AND ?4 LIMIT ?5 OFFSET ?6", nativeQuery = true)
+//    List<Transaction> findAllTransactions(String fromAccount, String toAccount, LocalDateTime dateFrom, LocalDateTime dateTo, Integer limit, Integer offset);
+//
 }
