@@ -49,13 +49,13 @@ class AccountsApiControllerTest {
 
     @Test
     public void canCreateSavingAccount() {
-        Account account = accountService.saveAccount(savingAccount);
+        Account account = accountService.saveAccount(new Account("NL43INHO4186520410", testuser1, 300.00, AccountType.saving));
         assertEquals(account.getIBAN(), savingAccount.getIBAN());
     }
 
     @Test
     public void canCreateCurrentAccount() {
-        Account account = accountService.saveAccount(currentAccount);
+        Account account = accountService.saveAccount(new Account("NL65INHO2095310012", testuser1, 800.00, AccountType.current));
         assertEquals(account.getIBAN(), currentAccount.getIBAN());
     }
 
@@ -71,6 +71,5 @@ class AccountsApiControllerTest {
         List<Account> accounts = accountService.getAllAccountsOfUser(testuser1);
         assertNotNull(accounts);
     }
-
 
 }
