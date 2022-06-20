@@ -82,18 +82,21 @@ public class TransactionService {
 
         deductMoneyFromAccountAndUpdateBalance(fromAccount, body, user);
 
+        //todo: customize the check and update
         //User userFromAccount = userRepository.getUserModelById(fromAccount.getUser().getUserId());
         User userFromAccount = userRepository.findById(fromAccount.getUser().getUserId()).orElse(null);
+        //todo: remaninglimit
         userFromAccount.setRemainingDayLimit(userFromAccount.getRemainingDayLimit()- body.getAmount());
         userRepository.save(userFromAccount);
 
-        addMoneyToAccountAndUpdateBalance(toAccount, body);
+        addMoneyToAccountAndUpdateBalance(toAccount, body.getAmount());
 
         Transaction transaction = convertDTOToTransactionEntity(body, user);
         return transactionRepository.save(transaction);
     }
 
     public void deductMoneyFromAccountAndUpdateBalance(Account fromAccount, TransactionDTO transactionDTO, User user) {
+       //todo: this check needs to be changed and work with query
         if (transactionDTO.getAmount() > user.getRemainingDayLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your day limit");
         }
@@ -117,8 +120,8 @@ public class TransactionService {
         accountRepository.save(fromAccount);
     }
 
-    public void addMoneyToAccountAndUpdateBalance(Account toAccount, TransactionDTO transactionDTO) {
-        Double addBalanceAfterTransaction = toAccount.getCurrentBalance() + transactionDTO.getAmount();
+    public void addMoneyToAccountAndUpdateBalance(Account toAccount, double amount) {
+        Double addBalanceAfterTransaction = toAccount.getCurrentBalance() + amount;
         toAccount.setCurrentBalance(addBalanceAfterTransaction);
         accountRepository.save(toAccount);
     }
@@ -140,10 +143,11 @@ public class TransactionService {
 
         List<Transaction> transactions = new ArrayList<>();
 
-        List<Transaction> temp = transactionRepository.filterTransactionsByIBAN(iban, datefrom, dateto);
-        transactions.addAll(temp);
+        List<Transaction> temp = transactionRepository.filterTransactionsByIBAN(iban, datefrom, dateto,skip,limit);
+       // transactions.addAll(temp);
 
-        return filterTransactionsByPagination(skip, limit, transactions);
+        return temp;
+                //filterTransactionsByPagination(skip, limit, transactions);
     }
 
 

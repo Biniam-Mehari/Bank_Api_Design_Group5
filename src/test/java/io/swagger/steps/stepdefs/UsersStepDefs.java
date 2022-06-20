@@ -75,7 +75,7 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
             httpHeaders.clear();
             httpHeaders.add("Authorization",  "Bearer " + token);
             request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "/bankAPI/users?skip=0&limit=4&withOutAccount=0", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            response = restTemplate.exchange(getBaseUrl() + "/bankAPI/users?skip=0", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
 
             status = response.getStatusCodeValue();
         });

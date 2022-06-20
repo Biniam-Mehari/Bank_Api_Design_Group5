@@ -57,7 +57,7 @@ public class UsersApiController implements UsersApi {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponseDTO>> usersGet(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the users with or with out account", required = false, schema = @Schema()) @Valid @RequestParam(value = "withOutAccount", required = false) Integer withOutAccount) {
+    public ResponseEntity<List<UserResponseDTO>> usersGet( @Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip,  @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit,  @Parameter(in = ParameterIn.QUERY, description = "fetch the users with or with out account", required = false, schema = @Schema()) @Valid @RequestParam(value = "withOutAccount", required = false) Integer withOutAccount) {
         if (skip == null) {
             skip = 0;
         }

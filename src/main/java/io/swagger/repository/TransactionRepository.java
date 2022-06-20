@@ -12,8 +12,8 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
 
     List<Transaction> findAllByTimestampBetween(LocalDateTime fromDate,LocalDateTime toDate);
 
-    @Query(value = "SELECT * from Transaction WHERE from_Account =:IBAN Or to_Account =:IBAN AND timestamp between :startDate and :endDate", nativeQuery = true)
-            List<Transaction> filterTransactionsByIBAN(String IBAN, LocalDateTime startDate, LocalDateTime endDate);
+    @Query(value = "SELECT * from Transaction WHERE from_Account =:IBAN Or to_Account =:IBAN AND timestamp between :startDate and :endDate order by TRANSACTION_ID offset :skip rows FETCH NEXT :limit rows only", nativeQuery = true)
+            List<Transaction> filterTransactionsByIBAN(String IBAN, LocalDateTime startDate, LocalDateTime endDate,int skip,int limit);
 
 
     @Query(value = "SELECT * from Transaction WHERE amount > :amount AND from_Account =:IBAN Or to_Account =:IBAN", nativeQuery = true)

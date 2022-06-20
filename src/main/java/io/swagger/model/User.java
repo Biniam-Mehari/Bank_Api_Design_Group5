@@ -28,6 +28,7 @@ public class User {
     private String password;
     private Double dayLimit = 2000.00;
     private Double transactionLimit = 500.00;
+    //todo: delete this remaining limit
     private Double remainingDayLimit = 2000.00;
     @OneToMany(mappedBy = "user")
     @JsonIgnoreProperties({"user"})

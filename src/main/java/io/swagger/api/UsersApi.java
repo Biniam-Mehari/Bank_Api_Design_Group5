@@ -42,7 +42,7 @@ public interface UsersApi {
     @RequestMapping(value = "/users",
             produces = { "application/json" },
             method = RequestMethod.GET)
-    ResponseEntity<List<UserResponseDTO>> usersGet(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of users" ,required=false,schema=@Schema()) @Valid @RequestParam(value = "skip", required = false) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users" ,required=false,schema=@Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the users with or with out account" ,required=false,schema=@Schema()) @Valid @RequestParam(value = "withOutAccount", required = false) Integer withOutAccount);
+    ResponseEntity<List<UserResponseDTO>> usersGet( @Parameter(in = ParameterIn.QUERY, description = "skips the list of users" ,required=false,schema=@Schema()) @Valid @RequestParam(value = "skip", required = false) Integer skip,  @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users" ,required=false,schema=@Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit,  @Parameter(in = ParameterIn.QUERY, description = "fetch the users with or with out account" ,required=false,schema=@Schema()) @Valid @RequestParam(value = "withOutAccount", required = false) Integer withOutAccount);
 
 
     @Operation(summary = "Login a user", description = "By passing in the appropriate options, you can search for user data in the system ", tags={ "customer", "employee" })

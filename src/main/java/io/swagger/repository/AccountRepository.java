@@ -18,6 +18,7 @@ public interface AccountRepository extends CrudRepository<Account, Integer> {
 
     List<Account> findAllByUserAndAccountType(User user, AccountType accountType);
 
+    //todo: better queirs
     List<Account> findAllByAccountIdGreaterThan(Integer bankid);
 
     // get sum of all accounts currentBalance where account contains user
