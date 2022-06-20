@@ -64,9 +64,8 @@ public class TransactionsApiController implements TransactionsApi {
             @Valid @RequestParam(value = "limit", required = false) Integer limit) {
 
         User user = loggedInUser();
-        if(!user.getRoles().contains(Role.ROLE_ADMIN)){
+        if(!user.getRoles().contains(Role.ROLE_ADMIN))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to acces this list");
-        }
 
         LocalDateTime startdate;
         LocalDateTime enddate;
@@ -135,6 +134,7 @@ public class TransactionsApiController implements TransactionsApi {
         transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
         return transactionResponseDTO;
     }
+
 
 
 

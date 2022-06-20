@@ -151,17 +151,31 @@ public class AccountsApiController implements AccountsApi {
             enddate = LocalDateTime.parse(endDate);
         }
         catch (Exception ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid date format, needs to be in yyyy-MM-dd");
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid date format, needs to be in yyyy-MM-ddTHH:mm:ss");
         }
 
-        List<TransactionResponseDTO> transactions = transactionService.
+        List<Transaction> transactions = transactionService.
                 findAllTransactionsByIBANAccount(IBAN, startdate, enddate, skipValue, limitValue);
 
-        transactions = transactions.stream()
-                .skip(skipValue)
-                .limit(limitValue)
-                .collect(Collectors.toList());
-        return new ResponseEntity<List<TransactionResponseDTO>>(transactions, HttpStatus.OK);
+        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
+
+        for (Transaction tr : transactions) {
+            TransactionResponseDTO dtos = convertTransactionEntityToTransactionResponseDTO(tr);
+            transactionResponseDTOS.add(dtos);
+        }
+        return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
+    }
+
+    public TransactionResponseDTO convertTransactionEntityToTransactionResponseDTO(Transaction storeTransaction) {
+        TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
+        transactionResponseDTO.setTransactionId(storeTransaction.getTransactionId());
+        transactionResponseDTO.setUserPerformingId(storeTransaction.getUserPerforming().getUserId());
+        transactionResponseDTO.setFromAccount(storeTransaction.getFromAccount());
+        transactionResponseDTO.setToAccount(storeTransaction.getToAccount());
+        transactionResponseDTO.setAmount(storeTransaction.getAmount());
+        transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
+        transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
+        return transactionResponseDTO;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -286,7 +300,7 @@ public class AccountsApiController implements AccountsApi {
             @Parameter(in = ParameterIn.PATH, description = "Numeric ID of the user to get", required=true, schema=@Schema())
             @PathVariable("IBAN") String IBAN, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch transaction by amount" ,required=true,schema=@Schema())
             @Valid @RequestParam(value = "amount", required = true) Double amount,
-            @NotNull @Parameter(in = ParameterIn.QUERY, description = "enter operator [<, ==, >]" ,required=true,schema=@Schema())
+            @NotNull @Parameter(in = ParameterIn.QUERY, description = "enter operator [<, =, >]" ,required=true,schema=@Schema())
             @Valid @RequestParam(value = "operator", required = true) String operator,
             @Valid @RequestParam(value = "skip", required = true) Integer skipValue,
             @Valid @RequestParam(value = "limit", required = true) Integer limitValue) {
@@ -298,24 +312,34 @@ public class AccountsApiController implements AccountsApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
         account = accountService.findByIBAN(IBAN);
-        account.setIBAN(IBAN);
-        List<TransactionResponseDTO> transactions = new ArrayList<>();
+
+        if (account == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
+
+        if(user != account.getUser()) {
+            if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to see this transaction");
+            }
+        }
+        List<Transaction> transactions = new ArrayList<>();
 
         if (operator.equals("<")) {
-            transactions = transactionService.findAllTransactionsLessThanAmount(account.getIBAN(), amount);
+            transactions.addAll(transactionService.findAllTransactionsLessThanAmount(skipValue, limitValue, account.getIBAN(), amount));
         }
         else if (operator.equals(">")) {
-            transactions = transactionService.findAllTransactionsGreaterThanAmount(account.getIBAN(), amount);
+            transactions.addAll(transactionService.findAllTransactionsGreaterThanAmount(skipValue, limitValue, account.getIBAN(), amount));
         }
         else if (operator.equals("=")) {
-            transactions = transactionService.findAllTransactionEqualToAmount(account.getIBAN(), amount);
+            transactions.addAll(transactionService.findAllTransactionEqualToAmount(skipValue, limitValue, account.getIBAN(), amount));
         }
 
-        transactions = transactions.stream()
-                .skip(skipValue)
-                .limit(limitValue)
-                .collect(Collectors.toList());
-        return new ResponseEntity<List<TransactionResponseDTO>>(transactions, HttpStatus.OK);
+        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
+
+        for (Transaction transaction: transactions) {
+            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
+            transactionResponseDTOS.add(transactionResponseDTO);
+        }
+        return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
     }
 
     public ResponseEntity<List<TransactionResponseDTO>> getTransactionByToOrFromAccount(
@@ -335,25 +359,36 @@ public class AccountsApiController implements AccountsApi {
         userAccount = accountService.findByIBAN(IBAN);
         userAccount.setIBAN(IBAN);
 
-        List<TransactionResponseDTO> transactions = new ArrayList<>();
+        if (userAccount == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
+
+        if(user != userAccount.getUser()) {
+            if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to see this transaction");
+            }
+        }
+
+        List<Transaction> transactions = new ArrayList<>();
 
         if (accountValue.equals("from")) {
-            transactions = transactionService.findAllTransactionsByFromAccount(userAccount.getIBAN());
+            transactions.addAll(transactionService.findAllTransactionsByFromAccount(skipValue,limitValue, userAccount.getIBAN()));
         }
         else if (accountValue.equals("to")) {
-            transactions = transactionService.findAllTransactionByToAccount(userAccount.getIBAN());
+            transactions.addAll(transactionService.findAllTransactionByToAccount(skipValue, limitValue, userAccount.getIBAN()));
         }
         else if (accountValue.equals("all")) {
-            transactions = transactionService.findAllTransactionsByFromAccount(userAccount.getIBAN());
-            transactions = transactionService.findAllTransactionByToAccount(userAccount.getIBAN());
+            transactions.addAll(transactionService.findAllTransactionsByFromAccount(skipValue, limitValue, userAccount.getIBAN()));
+            transactions.addAll(transactionService.findAllTransactionByToAccount(skipValue, limitValue, userAccount.getIBAN()));
         }
 
-        transactions = transactions.stream()
-                .skip(skipValue)
-                .limit(limitValue)
-                .collect(Collectors.toList());
+        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
 
-        return new ResponseEntity<List<TransactionResponseDTO>>(transactions, HttpStatus.OK);
+        for (Transaction transaction: transactions) {
+            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
+            transactionResponseDTOS.add(transactionResponseDTO);
+        }
+
+        return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
 
     }
 

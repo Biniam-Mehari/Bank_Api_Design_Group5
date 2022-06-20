@@ -7,6 +7,7 @@ import io.swagger.repository.AccountRepository;
 import io.swagger.repository.TransactionRepository;
 import io.swagger.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -35,9 +36,10 @@ public class TransactionService {
 
 
     public List<Transaction> getAllTransactions(Integer skip, Integer limit, LocalDateTime startdate, LocalDateTime enddate) {
-        List<Transaction> transactions = transactionRepository.findAllByTimestampBetween(startdate, enddate);
-
+        //Pageable pageable = PageRequest.of(skip, limit);
+        List<Transaction> transactions = transactionRepository.findAllByTimestampBetween(startdate, enddate /*pageable*/);
         return filterTransactionsByPagination(skip, limit, transactions);
+
     }
 
     public Transaction createTransaction(User user, TransactionDTO body) {
@@ -133,116 +135,76 @@ public class TransactionService {
         return transaction;
     }
 
-    public List<TransactionResponseDTO>  findAllTransactionsByIBANAccount(String iban, LocalDateTime datefrom, LocalDateTime dateto, Integer page, Integer limit) {
+    public List<Transaction>  findAllTransactionsByIBANAccount(String iban, LocalDateTime datefrom, LocalDateTime dateto, Integer skip, Integer limit) {
 
         List<Transaction> transactions = new ArrayList<>();
-        List<TransactionResponseDTO> transactionResponseDTOList = new ArrayList<>();
 
-//        transactions.addAll(transactionRepository.getTransactionByFromAccountAndTimestampBetween(iban, datefrom, dateto));
-//        transactions.addAll(transactionRepository.getTransactionByToAccountAndTimestampBetween(iban, datefrom, dateto));
-
-        Pageable pageable = PageRequest.of(page, limit);
-        //List<User> usersList = userRepository.findAll(pageable).getContent();
-        List<Transaction> temp = transactionRepository.filterTransaction(iban, datefrom, dateto, pageable);
+        List<Transaction> temp = transactionRepository.filterTransactionsByIBAN(iban, datefrom, dateto);
         transactions.addAll(temp);
 
-        //transactions.addAll(transactionRepository.findAllByIban(iban, datefrom, dateto));
-        for (Transaction transaction: transactions) {
-             TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
-             transactionResponseDTOList.add(transactionResponseDTO);
-        }
-
-        return transactionResponseDTOList;
+        return filterTransactionsByPagination(skip, limit, transactions);
     }
 
-    public TransactionResponseDTO convertTransactionEntityToTransactionResponseDTO(Transaction storeTransaction) {
 
-        TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
-        transactionResponseDTO.setTransactionId(storeTransaction.getTransactionId());
-        transactionResponseDTO.setUserPerformingId(storeTransaction.getUserPerforming().getUserId());
-        transactionResponseDTO.setFromAccount(storeTransaction.getFromAccount());
-        transactionResponseDTO.setToAccount(storeTransaction.getToAccount());
-        transactionResponseDTO.setAmount(storeTransaction.getAmount());
-        transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
-        transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
-        return transactionResponseDTO;
-    }
-
-    public List<TransactionResponseDTO> findAllTransactionsLessThanAmount(String IBAN, Double amount) {
+    public List<Transaction> findAllTransactionsLessThanAmount(Integer skip, Integer limit, String IBAN, Double amount) {
         List<Transaction> transactions = new ArrayList<>();
-        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
 
-        transactions.addAll(transactionRepository.findAllByAmountLessThanAndFromAccount(amount, IBAN));
-        transactions.addAll(transactionRepository.findAllByAmountLessThanAndToAccount(amount, IBAN));
+        transactions.addAll(transactionRepository.findAllTransactionsLessThanAmount(amount, IBAN));
 
-        for (Transaction transaction: transactions) {
-            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
-            transactionResponseDTOS.add(transactionResponseDTO);
-        }
-        return transactionResponseDTOS;
+        return filterTransactionsByPagination(skip, limit, transactions);
     }
 
-    public List<TransactionResponseDTO> findAllTransactionsGreaterThanAmount(String IBAN, Double amount) {
+    public List<Transaction> findAllTransactionsGreaterThanAmount(Integer skip, Integer limit, String IBAN, Double amount) {
         List<Transaction> transactions = new ArrayList<>();
-        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
 
-        transactions.addAll(transactionRepository.findAllByAmountGreaterThanAndFromAccount(amount, IBAN));
-        transactions.addAll(transactionRepository.findAllByAmountGreaterThanAndToAccount(amount, IBAN));
+        transactions.addAll(transactionRepository.findAllTransactionsGreaterThanAmount(amount, IBAN));
 
-        for (Transaction transaction: transactions) {
-            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
-            transactionResponseDTOS.add(transactionResponseDTO);
-        }
-        return transactionResponseDTOS;
+        return filterTransactionsByPagination(skip, limit, transactions);
     }
 
-    public List<TransactionResponseDTO> findAllTransactionEqualToAmount(String IBAN, Double amount) {
+    public List<Transaction> findAllTransactionEqualToAmount(Integer skip, Integer limit, String IBAN, Double amount) {
         List<Transaction> transactions = new ArrayList<>();
-        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
+        transactions.addAll(transactionRepository.findAllTransactionsEqualToAmount(amount, IBAN));
 
-        transactions.addAll(transactionRepository.findAllByAmountEqualsAndFromAccount(amount, IBAN));
-        transactions.addAll(transactionRepository.findAllByAmountEqualsAndToAccount(amount, IBAN));
-
-        for (Transaction transaction: transactions) {
-            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
-            transactionResponseDTOS.add(transactionResponseDTO);
-        }
-        return transactionResponseDTOS;
+        return filterTransactionsByPagination(skip, limit, transactions);
     }
 
-    public List<TransactionResponseDTO> findAllTransactionsByFromAccount(String IBAN) {
+    public List<Transaction> findAllTransactionsByFromAccount(Integer skip, Integer limit, String IBAN) {
         List<Transaction> transactions = new ArrayList<>();
-        List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
 
         transactions.addAll(transactionRepository.findAllByFromAccount(IBAN));
 
-        for (Transaction transaction: transactions) {
-            TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
-            transactionResponseDTOS.add(transactionResponseDTO);
-        }
-        return transactionResponseDTOS;
+        return filterTransactionsByPagination(skip, limit, transactions);
     }
 
-    public List<TransactionResponseDTO> findAllTransactionByToAccount(String IBAN) {
+    public List<Transaction> findAllTransactionByToAccount(Integer skipValue, Integer limitValue, String IBAN) {
          List<Transaction> transactions = new ArrayList<>();
-         List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
 
          transactions.addAll(transactionRepository.findAllByToAccount(IBAN));
 
-         for (Transaction transaction: transactions) {
-              TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(transaction);
-              transactionResponseDTOS.add(transactionResponseDTO);
-         }
-         return transactionResponseDTOS;
+         return filterTransactionsByPagination(skipValue, limitValue, transactions);
     }
 
     public List<Transaction> filterTransactionsByPagination(Integer skip, Integer limit, List<Transaction> transactions) {
-        if (skip < 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "skip value cannot be less than zero");
+
+        if (skip < 0 || limit <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "skip value cannot be less than zero or limit value cannot be less than or equal to zero");
         }
 
-        if (limit <= 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "limit cannot be less than or equal to zero");
+        if (skip > limit) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "skip value cannot be greater than the limit value");
+        }
+
+        int transactionSize = transactions.size();
+
+        limit = limit + skip;
+
+        if (limit > transactionSize) {
+            limit = transactionSize;
+        }
+
+        if (skip > transactionSize) {
+            skip = transactionSize;
         }
 
         return transactions.subList(skip, limit);

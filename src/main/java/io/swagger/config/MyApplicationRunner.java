@@ -94,6 +94,8 @@ public class MyApplicationRunner implements ApplicationRunner {
                 new Transaction(user4, "NL21INHO0123400233", "NL01INHO0000000001", 1000.00, TransactionType.deposit, dateTime8),
                 new Transaction(user3, "NL51INHO0123400029", "NL01INHO0000000001", 2000.00, TransactionType.withdraw, dateTime9),
                 new Transaction(user3, "NL51INHO0123400029", "NL01INHO0000000001", 900.00, TransactionType.transfer, dateTime9),
+                new Transaction(user3, "NL51INHO0123400029", "NL01INHO0000000001", 700.00, TransactionType.transfer, dateTime8),
+                new Transaction(user3, "NL51INHO0123400029", "NL01INHO0000000001", 500.00, TransactionType.transfer, dateTime9),
 
                 new Transaction(user2, "NL21INHO0123400789", "NL21INHO0123400081", 1900.00, TransactionType.transfer, dateTime1),
                 new Transaction(admin, "NL21INHO0123400789", "NL21INHO0123400081", 2100.00, TransactionType.deposit, dateTime2),
