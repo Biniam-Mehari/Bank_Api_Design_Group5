@@ -2,11 +2,15 @@ package io.swagger.steps.stepdefs;
 
 import io.cucumber.core.internal.com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java8.En;
+import io.swagger.model.dto.LoginDTO;
 import io.swagger.service.UserService;
 import io.swagger.steps.BaseStepDefinations;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class UsersStepDefs extends BaseStepDefinations implements En {
 
@@ -25,7 +29,6 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
     
     private String token = null;
 
-    private UserService userService;
 
     public UsersStepDefs() {
 
@@ -37,7 +40,7 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
             httpHeaders.clear();
             httpHeaders.add("Authorization",  "Bearer " + token);
             request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "bankAPI/users/", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            response = restTemplate.exchange(getBaseUrl() + "bankAPI/users", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
             status = response.getStatusCodeValue();
         });
 
@@ -52,8 +55,6 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
             response = restTemplate.exchange(getBaseUrl() + "bankAPI/users/" + id, HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
             status = response.getStatusCodeValue();
         });
-
-
 
         When("^I call get total balance of user by Id (\\d+)$", (Integer id) -> {
             httpHeaders.clear();
@@ -74,17 +75,12 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
             httpHeaders.clear();
             httpHeaders.add("Authorization",  "Bearer " + token);
             request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "/bankAPI/users", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            response = restTemplate.exchange(getBaseUrl() + "/bankAPI/users?skip=0&limit=4&withOutAccount=0", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+
             status = response.getStatusCodeValue();
         });
-        Given("^kvsdnvknsdv$", () -> {
-            // isdhvjd
-        });
-        Given("^I am abhishek$", () -> {
-            // hghjgh
-        });
-        When("^hjjlk$", () -> {
-            //kjhkj
+        Then("^I recieve a valid status code of (\\d+)$", (Integer code) -> {
+            Assertions.assertEquals(code, status);
         });
 
 

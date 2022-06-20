@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 
 public class AccountsStepDefs extends BaseStepDefinations implements En {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTY2NjM4NCwiZXhwIjoxNjU1NjY5OTg0fQ.7C7I2xMVVxDvixMJY0s8b3UqyXCAT-WYgDZ1kDkJOUM";
+    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTczODMxNSwiZXhwIjoxNjU1NzQxOTE1fQ.1de0aH_W0u59r_kUlLett9_W7DEEzmX-lbk_Qvd5sW0";
     private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NjY3NTk0LCJleHAiOjE2NTYyNzIzOTR9.XI7nat8c9C1oxrLkFydif3C6qtdzIIg6OGoiRcjLr6E";
     private static final String INVALID_TOKEN = "invalidtoken";
 
@@ -63,11 +63,25 @@ public class AccountsStepDefs extends BaseStepDefinations implements En {
             httpHeaders.clear();
             httpHeaders.add("Authorization",  "Bearer " + token);
             request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts/" + iban + "/transactions", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts/" + iban + "/transactions?startDate=2022-04-03T10:25:57&endDate=2022-05-27T16:27:39&skip=0&limit=4", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
             status = response.getStatusCodeValue();
         });
         Given("^I have an invalid token for role \"([^\"]*)\" to access transactions$", (String arg0) -> {
             token = INVALID_TOKEN;
         });
+        Given("^I have an valid token for role \"([^\"]*)\" to access account transactions$", (String role) -> {
+
+            if (role.equals("user")){
+                token = VALID_TOKEN_USER;
+            }
+        });
+        When("^I call get transactions by IBAN \"([^\"]*)\" by amount$", (String iban) -> {
+            httpHeaders.clear();
+            httpHeaders.add("Authorization",  "Bearer " + token);
+            request = new HttpEntity<>(null, httpHeaders);
+            response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts/" + iban + "/transactions/byamount?amount=900.00&operator==&skip=0&limit=5", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            status = response.getStatusCodeValue();
+        });
+
     }
 }
