@@ -83,11 +83,25 @@ public class UsersApiController implements UsersApi {
     }
 
     public ResponseEntity<UserResponseDTO> usersPost(@Parameter(in = ParameterIn.DEFAULT, description = "User to add", schema = @Schema()) @Valid @RequestBody UserDTO body) {
-        UserResponseDTO userResponseDTO = userService.addExternalUser(body);
-        if (userResponseDTO == null) {
-            // user already exists
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "User already exists");
+        // get the user from the token if authentication is not null
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = new User();
+        if (authentication != null) { user = loggedInUser(); }
+        // check if username not null or empty
+        if (body.getUsername() == null || body.getUsername().isEmpty()) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Name is required"); }
+        // check if password not null or empty
+        if (body.getPassword() == null || body.getPassword().isEmpty()) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Password is required"); }
+        // check if fullname not null or empty
+        if (body.getFullname() == null || body.getFullname().isEmpty()) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Fullname is required");}
+        // if createEmployee == 1 is not user ! employee
+        if (authentication == null && body.getCreateEmployee() == 1) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You are not allowed to create an employee");
+        } else if (body.getCreateEmployee() == 1 && !(user.getRoles().size() == 2)) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You are not allowed to create an employee because you are not an admin");
         }
+
+        UserResponseDTO userResponseDTO = userService.addExternalUser(body);
+        if (userResponseDTO == null) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "User already exists");}
         return new ResponseEntity<UserResponseDTO>(userResponseDTO, HttpStatus.OK);
     }
 
@@ -174,18 +188,36 @@ public class UsersApiController implements UsersApi {
         }
         // User/Employee can change different fields
         if (logedInUser.getRoles().contains(Role.ROLE_ADMIN) && logedInUser.getUserId() != user.getUserId()) {
-            if (body.getDayLimit() != user.getDayLimit()) {user.setDayLimit(body.getDayLimit());}
-            if (body.getTransactionLimit() != user.getTransactionLimit()) { user.setTransactionLimit(body.getTransactionLimit());}
-            if (body.getCreateEmployee() == 1) {user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));}
-            if (body.getCreateEmployee() == 0) {user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));}
+            if (body.getDayLimit() != user.getDayLimit()) {
+                user.setDayLimit(body.getDayLimit());
+            }
+            if (body.getTransactionLimit() != user.getTransactionLimit()) {
+                user.setTransactionLimit(body.getTransactionLimit());
+            }
+            if (body.getCreateEmployee() == 1) { user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));}
+            else { user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));}
+        // customer can change his own fullname & password
         } else {
-            if (body.getFullname() != user.getFullname()) {user.setFullname(body.getFullname());}
-            if (body.getPassword() != "") {user.setPassword(userService.encryptPassword(body.getPassword()));}
-            if (logedInUser.getRoles().contains(Role.ROLE_ADMIN)){
-                if (body.getDayLimit() != user.getDayLimit()) {user.setDayLimit(body.getDayLimit());}
-                if (body.getTransactionLimit() != user.getTransactionLimit()) { user.setTransactionLimit(body.getTransactionLimit());}
-                if (body.getCreateEmployee() == 1) {user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));}
-                if (body.getCreateEmployee() == 0) {user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));}
+            if (body.getFullname() != user.getFullname()) {
+                user.setFullname(body.getFullname());
+            }
+            // only owner of the account can change password
+            if (body.getPassword() != "" || logedInUser.getUserId() != user.getUserId()) {
+                user.setPassword(userService.encryptPassword(body.getPassword()));
+            }
+            if (logedInUser.getRoles().contains(Role.ROLE_ADMIN)) {
+                if (body.getDayLimit() != user.getDayLimit()) {
+                    user.setDayLimit(body.getDayLimit());
+                }
+                if (body.getTransactionLimit() != user.getTransactionLimit()) {
+                    user.setTransactionLimit(body.getTransactionLimit());
+                }
+                if (body.getCreateEmployee() == 1) {
+                    user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));
+                }
+                if (body.getCreateEmployee() == 0) {
+                    user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));
+                }
             }
         }
         userService.updateUser(user);
