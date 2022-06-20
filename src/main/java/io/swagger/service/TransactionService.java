@@ -36,10 +36,11 @@ public class TransactionService {
 
 
     public List<Transaction> getAllTransactions(Integer skip, Integer limit, LocalDateTime startdate, LocalDateTime enddate) {
-        //Pageable pageable = PageRequest.of(skip, limit);
-        List<Transaction> transactions = transactionRepository.findAllByTimestampBetween(startdate, enddate /*pageable*/);
-        return filterTransactionsByPagination(skip, limit, transactions);
 
+        List<Transaction> transactions = new ArrayList<>();
+        transactions.addAll(transactionRepository.findAllByTimestampBetween(startdate, enddate));
+
+        return filterTransactionsByPagination(skip, limit, transactions);
     }
 
     public Transaction createTransaction(User user, TransactionDTO body) {
