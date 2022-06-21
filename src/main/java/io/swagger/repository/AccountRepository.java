@@ -19,7 +19,8 @@ public interface AccountRepository extends CrudRepository<Account, Integer> {
     List<Account> findAllByUserAndAccountType(User user, AccountType accountType);
 
     //todo: better queirs
-    List<Account> findAllByAccountIdGreaterThan(Integer bankid);
+    @Query(value = "SELECT * from Account offset :skip rows FETCH NEXT :limit rows only", nativeQuery = true)
+    List<Account> getAllAccountsInsideSkipAndLimit(Integer skip,Integer limit);
 
     // get sum of all accounts currentBalance where account contains user
     @Query("select sum(account.currentBalance) from Account account where account.user =:user")

@@ -22,8 +22,9 @@ public class AccountService {
     }
 
 
-    public void deleteAccount(Account account) {
-        accountRepository.delete(account);
+    public void closeAccount(Account account) {
+        account.setStatus("closed");
+        accountRepository.save(account);
     }
 
     public Account findByIBAN(String iban) {
@@ -35,10 +36,10 @@ public class AccountService {
         return accountRepository.findAllByUser(user);
     }
 
-    //todo: better queirs
-    public List<Account> findAllByAccountIdAfterAndAccountIdBefore(){
+
+    public List<Account> getAllAccountsInsideSkipAndLimit(Integer skip,Integer limit){
         //return (List<Account>) accountRepository.findAllByAccountIdAfterAndAccountIdBefore(skip,limit);
-        return  accountRepository.findAllByAccountIdGreaterThan(1);
+        return  accountRepository.getAllAccountsInsideSkipAndLimit(skip,limit);
     }
 
     public List<Account> findAllByUserAndAccountType(User user, AccountType accountType) {

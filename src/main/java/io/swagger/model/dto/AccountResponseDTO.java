@@ -25,6 +25,7 @@ public class AccountResponseDTO {
     private Integer userId = null;
 
     private  Double currentBalance = null;
+    private String status = null;
 
 
 

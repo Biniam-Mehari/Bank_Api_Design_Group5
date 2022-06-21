@@ -5,6 +5,7 @@ import io.swagger.model.Transaction;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 public interface TransactionRepository extends CrudRepository<Transaction, Integer> {
@@ -25,6 +26,8 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
     @Query(value = "SELECT * FROM Transaction WHERE amount =:amount AND from_Account =:IBAN Or to_Account =:IBAN", nativeQuery = true)
             List<Transaction> findAllTransactionsEqualToAmount(Double amount, String IBAN);
 
+    @Query("select sum(transaction.amount) from Transaction transaction where transaction.fromAccount =:fromaccount And transaction.timestamp =:dateOfToday")
+            Double transactionBalanceOfOneDay(Date dateOfToday);
 
     List<Transaction> findAllByFromAccount(String IBAN);
     List<Transaction> findAllByToAccount(String IBAN);

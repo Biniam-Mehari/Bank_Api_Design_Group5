@@ -62,8 +62,8 @@ public class AccountsApiController implements AccountsApi {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> accountsIBANDelete(@Size(min = 18, max = 18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required = true, schema = @Schema()) @PathVariable("IBAN") String IBAN) {
-        User user = loggedInUser();
+    public ResponseEntity<Void> closeAccount(@Size(min = 18, max = 18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required = true, schema = @Schema()) @PathVariable("IBAN") String IBAN) {
+
         Account account = new Account();
         if(!account.validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
@@ -73,18 +73,18 @@ public class AccountsApiController implements AccountsApi {
 
 
         if (account.getAccountId()==1){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"You can not delete the Bank's account");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"You can not close the Bank's account");
         }
             if(account.getAccountType().equals(AccountType.current)){
                 List<Account> savingAccounts = accountService.findAllByUserAndAccountType(account.getUser(),AccountType.saving);
                 if(savingAccounts.isEmpty()){
-                    accountService.deleteAccount(account);
+                    accountService.closeAccount(account);
                 }else {
                     throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You can not delete your currect account if you have a saving account.");
                 }
             }
             else {
-                accountService.deleteAccount(account);
+                accountService.closeAccount(account);
             }
 
         return new ResponseEntity<Void>(HttpStatus.OK);
@@ -198,23 +198,26 @@ public class AccountsApiController implements AccountsApi {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AccountResponseDTO>> getAccounts(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of accounts", required = true, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of accounts", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit) {
-
-        // getes the data of a user from the token
-        User user = loggedInUser();
+    public ResponseEntity<List<AccountResponseDTO>> getAccounts( @Parameter(in = ParameterIn.QUERY, description = "skip the needed amount of accounts", required = false, schema = @Schema()) @Valid @RequestParam(value = "skip", required = false) Integer skip,
+                                                                 @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of accounts", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit) {
 
 
-        List<Account> accounts = accountService.findAllByAccountIdAfterAndAccountIdBefore();
+        //default value for skip and limit
+        if(skip==0 || skip==null){
+            //it alwasy skip the first account which is bank account
+            skip=1;
+        }
+        if(limit==null || limit==0){
+            //it alwasy skip the first account which is bank account
+            limit=10;
+        }
+        List<Account> accounts = accountService.getAllAccountsInsideSkipAndLimit(skip,limit);
         List<AccountResponseDTO> accountResponseDTOS = new ArrayList<>();
         for (Account account: accounts){
           AccountResponseDTO accountResponseDTO = changeAccoutToAccountResponseDTO(account);
             accountResponseDTOS.add(accountResponseDTO);
         }
 
-        accountResponseDTOS = accountResponseDTOS.stream()
-                .skip(skip)
-                .limit(limit)
-                .collect(Collectors.toList());
         return new ResponseEntity<List<AccountResponseDTO>>(accountResponseDTOS,HttpStatus.OK);
     }
 
@@ -278,6 +281,7 @@ public class AccountsApiController implements AccountsApi {
         accountResponseDTO.setAbsoluteLimit(accountRegistered.getAbsoluteLimit());
         accountResponseDTO.setUserId(accountRegistered.getUser().getUserId());
         accountResponseDTO.setCurrentBalance(accountRegistered.getCurrentBalance());
+        accountResponseDTO.setStatus(accountRegistered.getStatus());
         return accountResponseDTO;
     }
 
