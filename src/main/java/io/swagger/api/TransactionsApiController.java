@@ -26,6 +26,7 @@ import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,7 +66,7 @@ public class TransactionsApiController implements TransactionsApi {
 
         User user = loggedInUser();
         if(!user.getRoles().contains(Role.ROLE_ADMIN))
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to acces this list");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "you are not authorized to access this list");
 
         LocalDateTime startdate;
         LocalDateTime enddate;
@@ -93,7 +94,6 @@ public class TransactionsApiController implements TransactionsApi {
         return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOList, HttpStatus.OK);
     }
 
-    // creates transaction
     public ResponseEntity<TransactionResponseDTO> transactionsPost(
             @Parameter(in = ParameterIn.DEFAULT, description = "", schema=@Schema())
             @Valid @RequestBody TransactionDTO body) throws Exception {
@@ -111,7 +111,12 @@ public class TransactionsApiController implements TransactionsApi {
         //gets information of user loogedin
         User user = loggedInUser();
 
-       Transaction storeTransaction = transactionService.createTransaction(user, body);
+        validateFromAccountAndToAccount(body, user);
+
+       //Transaction storeTransaction = transactionService.createTransaction(user, body);
+       Transaction createTransaction = convertTransactionDtoToTransactionEntity(user, body);
+
+       Transaction storeTransaction = transactionService.createTransaction2(createTransaction);
        TransactionResponseDTO transactionResponseDTO = convertTransactionEntityToTransactionResponseDTO(storeTransaction);
        return new ResponseEntity<TransactionResponseDTO>(transactionResponseDTO, HttpStatus.OK);
     }
@@ -133,6 +138,92 @@ public class TransactionsApiController implements TransactionsApi {
         transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
         transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
         return transactionResponseDTO;
+    }
+
+    public Transaction convertTransactionDtoToTransactionEntity(User user, TransactionDTO transactionDTO) {
+        Transaction transaction = new Transaction();
+        transaction.setTransactionType(TransactionType.valueOf(transactionDTO.getTransactionType().toLowerCase()));
+        transaction.setFromAccount(transactionDTO.getFromAccount());
+        transaction.setToAccount(transactionDTO.getToAccount());
+        transaction.setAmount(transactionDTO.getAmount());
+
+        LocalDateTime todayDatetime = LocalDateTime.now();
+        transaction.setTimestamp(todayDatetime.truncatedTo(ChronoUnit.SECONDS));
+        transaction.setUserPerforming(user);
+        return transaction;
+    }
+
+    public void validateFromAccountAndToAccount(TransactionDTO dto, User user) {
+        Account fromAccount = new Account();
+        Account toAccount = new Account();
+
+        if (!fromAccount.validateIBAN(dto.getFromAccount()))
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid IBAN format");
+
+        if (!toAccount.validateIBAN(dto.getToAccount()))
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid IBAN format");
+
+        fromAccount = accountService.findByIBAN(dto.getFromAccount());
+        toAccount = accountService.findByIBAN(dto.getToAccount());
+
+        if (fromAccount == null || toAccount == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "account not found");
+
+        if (fromAccount.getUser() != user) {
+            if (!(dto.getTransactionType().equals("deposit") && fromAccount.getAccountId().equals(1))){
+                if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "this account does not belong to you");
+                }
+            }
+        }
+
+        if(!fromAccount.getAccountType().equals(AccountType.current) || !toAccount.getAccountType().equals(AccountType.current)) {
+            if(fromAccount.getAccountType().equals(AccountType.saving) && toAccount.getAccountType().equals(AccountType.saving)){
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "you cannot send or receive from a saving account to a saving account");
+            }
+            if(fromAccount.getUser() != toAccount.getUser()){
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You cannot send or receive from saving account and current account of different user");
+            }
+        }
+
+        deductMoneyFromAccountAndUpdateBalance(fromAccount, dto, user);
+        //update remainingdaylimit
+        User userFromAccount = userService.getUserModelById(fromAccount.getUser().getUserId());
+        userFromAccount.setRemainingDayLimit(userFromAccount.getRemainingDayLimit()-dto.getAmount());
+        userService.updateUser(userFromAccount);
+
+        addMoneyToAccountAndUpdateBalance(toAccount, dto.getAmount());
+    }
+
+    public void deductMoneyFromAccountAndUpdateBalance(Account fromAccount, TransactionDTO transactionDTO, User user) {
+        //todo: this check needs to be changed and work with query
+        if (transactionDTO.getAmount() > user.getRemainingDayLimit()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your day limit");
+        }
+
+        if (transactionDTO.getAmount() > user.getTransactionLimit()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your transaction limit");
+        }
+
+        if (transactionDTO.getAmount() <= 0.00) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "amount to be transfered needs to be greater than zero");
+        }
+
+        //deduct balance
+        Double deductBalanceAfterTransaction = fromAccount.getCurrentBalance() - transactionDTO.getAmount();
+
+        //check absolute limit
+        if(deductBalanceAfterTransaction < fromAccount.getAbsoluteLimit()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "you have exceeded your absolute limit!");
+        }
+        fromAccount.setCurrentBalance(deductBalanceAfterTransaction);
+        accountService.saveAccount(fromAccount);
+    }
+
+    public void addMoneyToAccountAndUpdateBalance(Account toAccount, double amount) {
+        Double addBalanceAfterTransaction = toAccount.getCurrentBalance() + amount;
+        toAccount.setCurrentBalance(addBalanceAfterTransaction);
+        accountService.saveAccount(toAccount);
     }
 
 

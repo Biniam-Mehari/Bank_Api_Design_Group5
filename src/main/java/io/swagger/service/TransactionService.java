@@ -37,16 +37,21 @@ public class TransactionService {
 
     public List<Transaction> getAllTransactions(Integer skip, Integer limit, LocalDateTime startdate, LocalDateTime enddate) {
 
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.addAll(transactionRepository.findAllByTimestampBetween(startdate, enddate));
+        return transactionRepository.findAllByTimestampBetween(startdate, enddate, skip, limit);
 
-        return filterTransactionsByPagination(skip, limit, transactions);
     }
+
+    public Transaction createTransaction2(Transaction transaction) {
+        return transactionRepository.save(transaction);
+    }
+
+
 
     public Transaction createTransaction(User user, TransactionDTO body) {
 
         Account fromAccount = new Account();
         Account toAccount = new Account();
+
 
         if (!fromAccount.validateIBAN(body.getFromAccount())) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid IBAN format");
@@ -141,77 +146,31 @@ public class TransactionService {
 
     public List<Transaction>  findAllTransactionsByIBANAccount(String iban, LocalDateTime datefrom, LocalDateTime dateto, Integer skip, Integer limit) {
 
-        List<Transaction> transactions = new ArrayList<>();
-
-        List<Transaction> temp = transactionRepository.filterTransactionsByIBAN(iban, datefrom, dateto,skip,limit);
-       // transactions.addAll(temp);
-
-        return temp;
-                //filterTransactionsByPagination(skip, limit, transactions);
+        return transactionRepository.filterTransactionsByIBAN(iban, datefrom, dateto, skip, limit);
     }
 
-
     public List<Transaction> findAllTransactionsLessThanAmount(Integer skip, Integer limit, String IBAN, Double amount) {
-        List<Transaction> transactions = new ArrayList<>();
 
-        transactions.addAll(transactionRepository.findAllTransactionsLessThanAmount(amount, IBAN));
-
-        return filterTransactionsByPagination(skip, limit, transactions);
+        return transactionRepository.findAllTransactionsLessThanAmount(amount, IBAN, skip, limit);
     }
 
     public List<Transaction> findAllTransactionsGreaterThanAmount(Integer skip, Integer limit, String IBAN, Double amount) {
-        List<Transaction> transactions = new ArrayList<>();
 
-        transactions.addAll(transactionRepository.findAllTransactionsGreaterThanAmount(amount, IBAN));
-
-        return filterTransactionsByPagination(skip, limit, transactions);
+        return transactionRepository.findAllTransactionsGreaterThanAmount(amount, IBAN, skip, limit);
     }
 
     public List<Transaction> findAllTransactionEqualToAmount(Integer skip, Integer limit, String IBAN, Double amount) {
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.addAll(transactionRepository.findAllTransactionsEqualToAmount(amount, IBAN));
 
-        return filterTransactionsByPagination(skip, limit, transactions);
+        return transactionRepository.findAllTransactionsEqualToAmount(amount, IBAN, skip, limit);
     }
 
     public List<Transaction> findAllTransactionsByFromAccount(Integer skip, Integer limit, String IBAN) {
-        List<Transaction> transactions = new ArrayList<>();
 
-        transactions.addAll(transactionRepository.findAllByFromAccount(IBAN));
-
-        return filterTransactionsByPagination(skip, limit, transactions);
+        return transactionRepository.findAllByFromAccount(IBAN, skip, limit);
     }
 
-    public List<Transaction> findAllTransactionByToAccount(Integer skipValue, Integer limitValue, String IBAN) {
-         List<Transaction> transactions = new ArrayList<>();
-
-         transactions.addAll(transactionRepository.findAllByToAccount(IBAN));
-
-         return filterTransactionsByPagination(skipValue, limitValue, transactions);
+    public List<Transaction> findAllTransactionByToAccount(Integer skip, Integer limit, String IBAN) {
+         return transactionRepository.findAllByToAccount(IBAN, skip, limit);
     }
 
-    public List<Transaction> filterTransactionsByPagination(Integer skip, Integer limit, List<Transaction> transactions) {
-
-        if (skip < 0 || limit <= 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "skip value cannot be less than zero or limit value cannot be less than or equal to zero");
-        }
-
-        if (skip > limit) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "skip value cannot be greater than the limit value");
-        }
-
-        int transactionSize = transactions.size();
-
-        limit = limit + skip;
-
-        if (limit > transactionSize) {
-            limit = transactionSize;
-        }
-
-        if (skip > transactionSize) {
-            skip = transactionSize;
-        }
-
-        return transactions.subList(skip, limit);
-    }
 }

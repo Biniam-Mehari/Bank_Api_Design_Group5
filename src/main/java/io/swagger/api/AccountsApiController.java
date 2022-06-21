@@ -184,7 +184,6 @@ public class AccountsApiController implements AccountsApi {
         //initializing object of AccountResponseDto
         AccountResponseDTO accountResponseDTO;
 
-
             //check if user exist
             User userToCreatAccount = userService.getUserModelById(body.getUserId());
             if(userToCreatAccount==null){
