@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 
 public class AccountsStepDefs extends BaseStepDefinations implements En {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTc1NDIyNSwiZXhwIjoxNjU1NzU3ODI1fQ.CKhp3LWyjrR9bT-LjtvI_vVD-Nz8yN7IqaNr4DEZMv4";
+    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTgyNDgzOCwiZXhwIjoxNjU1ODI4NDM4fQ.z1IcTVlTymBRIIS-vyw0GFC9Jk5kaEWoNwjm4lkQWc0";
     private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NjY3NTk0LCJleHAiOjE2NTYyNzIzOTR9.XI7nat8c9C1oxrLkFydif3C6qtdzIIg6OGoiRcjLr6E";
     private static final String INVALID_TOKEN = "invalidtoken";
 
@@ -80,6 +80,14 @@ public class AccountsStepDefs extends BaseStepDefinations implements En {
             httpHeaders.add("Authorization",  "Bearer " + token);
             request = new HttpEntity<>(null, httpHeaders);
             response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts/" + iban + "/transactions/byamount?amount=900.00&operator==&skip=0&limit=5", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            status = response.getStatusCodeValue();
+        });
+        When("^I call get transactions by IBAN \"([^\"]*)\" by operator \"([^\"]*)\"$", (String iban, String operator) -> {
+            httpHeaders.clear();
+            httpHeaders.add("Authorization", "Bearer " + token);
+            request = new HttpEntity<>(null, httpHeaders);
+
+            response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts/" + iban + "/transactions/byamount?amount=900.00&operator==" + operator + "&skip=0&limit=5", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
             status = response.getStatusCodeValue();
         });
 

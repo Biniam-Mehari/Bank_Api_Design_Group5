@@ -26,6 +26,7 @@ Feature: Everything related to users
      When I call correctly get all users endpoint
      Then I recieve a status code of 200
 
+
        
 
 

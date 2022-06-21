@@ -25,3 +25,9 @@ Feature: Everything related to accounts
     When I call get transactions by IBAN "NL51INHO0123400029" by amount
     Then I receive a status code of 200
 
+  Scenario: Getting all transactions by amount is status OK
+    Given I have an valid token for role "user" to access account transactions
+    When I call get transactions by IBAN "NL51INHO0123400029" by operator "="
+    Then I receive a status code of 200
+
+
