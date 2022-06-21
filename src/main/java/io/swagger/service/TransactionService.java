@@ -100,7 +100,7 @@ public class TransactionService {
         if (transactionDTO.getAmount() > user.getRemainingDayLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your day limit");
         }
-
+// transactionrepo.getalltransactionofaday check with the transactiondto.getamount
         if (transactionDTO.getAmount() > user.getTransactionLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your transaction limit");
         }

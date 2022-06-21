@@ -2,7 +2,6 @@ package io.swagger.repository;
 
 import io.swagger.model.Account;
 import io.swagger.model.AccountType;
-import io.swagger.model.Transaction;
 import io.swagger.model.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -19,7 +18,8 @@ public interface AccountRepository extends CrudRepository<Account, Integer> {
     List<Account> findAllByUserAndAccountType(User user, AccountType accountType);
 
     //todo: better queirs
-    List<Account> findAllByAccountIdGreaterThan(Integer bankid);
+    @Query(value = "SELECT * from Account offset :skip rows FETCH NEXT :limit rows only", nativeQuery = true)
+    List<Account> getAllAccountsinsideSkipAndLimit(Integer skip,Integer limit);
 
     // get sum of all accounts currentBalance where account contains user
     @Query("select sum(account.currentBalance) from Account account where account.user =:user")

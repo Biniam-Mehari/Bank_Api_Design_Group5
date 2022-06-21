@@ -33,6 +33,7 @@ public class Account{
   private Double currentBalance = 0.00;
   private AccountType accountType;
   private Double absoluteLimit = 0.00;
+  private String status = "open";
 
   //private Integer userId;
 

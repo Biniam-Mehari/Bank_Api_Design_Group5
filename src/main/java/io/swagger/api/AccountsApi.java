@@ -44,7 +44,7 @@ public interface AccountsApi {
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     @RequestMapping(value = "/accounts/{IBAN}",
             method = RequestMethod.DELETE)
-    ResponseEntity<Void> accountsIBANDelete(@Size(min=18,max=18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required=true, schema=@Schema()) @PathVariable("IBAN") String IBAN);
+    ResponseEntity<Void> closeAccount(@Size(min=18,max=18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required=true, schema=@Schema()) @PathVariable("IBAN") String IBAN);
 
 
     @Operation(summary = "Search for account by IBAN", description = "By passing in the appropriate options, you can search for user data in the system ", security = {
@@ -125,7 +125,7 @@ public interface AccountsApi {
     @RequestMapping(value = "/accounts",
             produces = { "application/json" },
             method = RequestMethod.GET)
-    ResponseEntity<List<AccountResponseDTO>> getAccounts(@NotNull @Parameter(in = ParameterIn.QUERY, description = "skips the list of users" ,required=true,schema=@Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @NotNull @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users" ,required=true,schema=@Schema()) @Valid @RequestParam(value = "limit", required = true) Integer limit);
+    ResponseEntity<List<AccountResponseDTO>> getAccounts(@Parameter(in = ParameterIn.QUERY, description = "skips the list of accounts" ,schema=@Schema()) @Valid @RequestParam(value = "skip") Integer skip, @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of accounts" ,schema=@Schema()) @Valid @RequestParam(value = "limit") Integer limit);
 
     @Operation(summary = "Set absolute Limit", description = "updates absolute limit for account", security = {
             @SecurityRequirement(name = "bearerAuth")    }, tags={ "employee"})
