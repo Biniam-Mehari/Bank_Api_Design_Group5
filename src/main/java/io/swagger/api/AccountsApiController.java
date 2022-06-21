@@ -375,14 +375,14 @@ public class AccountsApiController implements AccountsApi {
         List<Transaction> transactions = new ArrayList<>();
 
         if (accountValue.equals("from")) {
-            transactions.addAll(transactionService.findAllTransactionsByFromAccount(skipValue,limitValue, userAccount.getIBAN()));
+            transactions.addAll(transactionService.findAllTransactionsByFromAccount(userAccount.getIBAN(), skipValue,limitValue));
         }
         else if (accountValue.equals("to")) {
-            transactions.addAll(transactionService.findAllTransactionByToAccount(skipValue, limitValue, userAccount.getIBAN()));
+            transactions.addAll(transactionService.findAllTransactionByToAccount(userAccount.getIBAN(), skipValue, limitValue));
         }
         else if (accountValue.equals("all")) {
-            transactions.addAll(transactionService.findAllTransactionsByFromAccount(skipValue, limitValue, userAccount.getIBAN()));
-            transactions.addAll(transactionService.findAllTransactionByToAccount(skipValue, limitValue, userAccount.getIBAN()));
+            transactions.addAll(transactionService.findAllTransactionsByFromAccount(userAccount.getIBAN(), skipValue, limitValue));
+            transactions.addAll(transactionService.findAllTransactionByToAccount(userAccount.getIBAN(), skipValue, limitValue));
         }
 
         List<TransactionResponseDTO> transactionResponseDTOS = new ArrayList<>();
@@ -393,7 +393,6 @@ public class AccountsApiController implements AccountsApi {
         }
 
         return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
-
     }
 
 }
