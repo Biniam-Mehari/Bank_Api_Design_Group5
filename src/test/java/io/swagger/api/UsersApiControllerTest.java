@@ -72,4 +72,11 @@ class UsersApiControllerTest {
         List<User> users = userService.getAllUsers(0, 10, 0);
         assertNotNull(users);
     }
+
+    // test if i can post a new user
+    @Test
+    public void canPostANewUser() {
+        User user = userService.createUser("john12", "john doe", "secret", 0);
+        assertEquals(user.getUsername(), "john12");
+    }
 }

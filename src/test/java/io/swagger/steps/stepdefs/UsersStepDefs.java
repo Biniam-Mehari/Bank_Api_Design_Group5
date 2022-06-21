@@ -2,7 +2,10 @@ package io.swagger.steps.stepdefs;
 
 import io.cucumber.core.internal.com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java8.En;
+import io.swagger.model.User;
 import io.swagger.model.dto.LoginDTO;
+import io.swagger.model.dto.UserDTO;
+import io.swagger.model.dto.UserResponseDTO;
 import io.swagger.service.UserService;
 import io.swagger.steps.BaseStepDefinations;
 import org.junit.jupiter.api.Assertions;
@@ -28,6 +31,7 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
     private Integer status;
     
     private String token = null;
+    private UserDTO dto;
 
 
     public UsersStepDefs() {
@@ -82,6 +86,20 @@ public class UsersStepDefs extends BaseStepDefinations implements En {
         Then("^I recieve a valid status code of (\\d+)$", (Integer code) -> {
             Assertions.assertEquals(code, status);
         });
+
+
+        When("^I make a post request to the users endpoint$", () -> {
+            httpHeaders.add("Authorization", "Bearer " + token);
+            httpHeaders.add("Content-Type", "application/json");
+            request = new HttpEntity<>(mapper.writeValueAsString(dto), httpHeaders);
+            response = restTemplate.postForEntity(getBaseUrl() + "/users", request, String.class);
+            status = response.getStatusCodeValue();
+        });
+
+        Then("^the result is a status of (\\d+)$", (Integer code) -> {
+            Assertions.assertEquals(code, status);
+        });
+
 
 
     }

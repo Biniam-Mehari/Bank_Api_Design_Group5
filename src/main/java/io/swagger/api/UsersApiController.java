@@ -57,7 +57,7 @@ public class UsersApiController implements UsersApi {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponseDTO>> usersGet( @Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip,  @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit,  @Parameter(in = ParameterIn.QUERY, description = "fetch the users with or with out account", required = false, schema = @Schema()) @Valid @RequestParam(value = "withOutAccount", required = false) Integer withOutAccount) {
+    public ResponseEntity<List<UserResponseDTO>> usersGet(@Parameter(in = ParameterIn.QUERY, description = "skips the list of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "skip", required = true) Integer skip, @Parameter(in = ParameterIn.QUERY, description = "fetch the needed amount of users", required = false, schema = @Schema()) @Valid @RequestParam(value = "limit", required = false) Integer limit, @Parameter(in = ParameterIn.QUERY, description = "fetch the users with or with out account", required = false, schema = @Schema()) @Valid @RequestParam(value = "withOutAccount", required = false) Integer withOutAccount) {
         if (skip == null) {
             skip = 0;
         }
@@ -86,13 +86,21 @@ public class UsersApiController implements UsersApi {
         // get the user from the token if authentication is not null
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = new User();
-        if (authentication != null) { user = loggedInUser(); }
+        if (authentication != null) {
+            user = loggedInUser();
+        }
         // check if username not null or empty
-        if (body.getUsername() == null || body.getUsername().isEmpty()) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Name is required"); }
+        if (body.getUsername() == null || body.getUsername().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Name is required");
+        }
         // check if password not null or empty
-        if (body.getPassword() == null || body.getPassword().isEmpty()) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Password is required"); }
+        if (body.getPassword() == null || body.getPassword().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Password is required");
+        }
         // check if fullname not null or empty
-        if (body.getFullname() == null || body.getFullname().isEmpty()) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Fullname is required");}
+        if (body.getFullname() == null || body.getFullname().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Fullname is required");
+        }
         // if createEmployee == 1 is not user ! employee
         if (authentication == null && body.getCreateEmployee() == 1) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You are not allowed to create an employee");
@@ -101,7 +109,9 @@ public class UsersApiController implements UsersApi {
         }
 
         UserResponseDTO userResponseDTO = userService.addExternalUser(body);
-        if (userResponseDTO == null) { throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "User already exists");}
+        if (userResponseDTO == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "User already exists");
+        }
         return new ResponseEntity<UserResponseDTO>(userResponseDTO, HttpStatus.OK);
     }
 
@@ -186,30 +196,58 @@ public class UsersApiController implements UsersApi {
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User does not exist");
         }
+        // if user wants to change password of onother user than himself return forbidden
+        if (logedInUser.getUserId() != userId && !body.getPassword().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to change another users his password");
+        }
+        // if role is user only and createEmployee is 1 return forbidden
+        if (logedInUser.getRoles().size() == 1 && body.getCreateEmployee() == 1) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to create an employee");
+        }
+        // if user is changing another users fullname return forbidden
+        if (logedInUser.getUserId() != userId && !body.getFullname().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to change another users fullname");
+        }
+        // if role is user only and transactionLimit is not null return forbidden
+        if (logedInUser.getRoles().size() == 1 && body.getTransactionLimit() != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to change transaction limit");
+        }
+        // if role is user only and dayLimit is not null return forbidden
+        if (logedInUser.getRoles().size() == 1 && body.getDayLimit() != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to change day limit");
+        }
+        updateUser(logedInUser, body, user);
+        return new ResponseEntity<Void>(HttpStatus.OK);
+    }
+
+    private void updateUser(User logedInUser, UserUpdateDTO body, User user) {
         // User/Employee can change different fields
         if (logedInUser.getRoles().contains(Role.ROLE_ADMIN) && logedInUser.getUserId() != user.getUserId()) {
-            if (body.getDayLimit() != user.getDayLimit()) {
+            if (body.getDayLimit() != user.getDayLimit() && body.getDayLimit() != null) {
                 user.setDayLimit(body.getDayLimit());
             }
-            if (body.getTransactionLimit() != user.getTransactionLimit()) {
+            if (body.getTransactionLimit() != user.getTransactionLimit() && body.getTransactionLimit() != null) {
                 user.setTransactionLimit(body.getTransactionLimit());
             }
-            if (body.getCreateEmployee() == 1) { user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));}
-            else { user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));}
-        // customer can change his own fullname & password
+            if (body.getCreateEmployee() == 1) {
+                user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_ADMIN)));
+            } else {
+                user.setRoles(new ArrayList<>(Arrays.asList(Role.ROLE_USER)));
+            }
+            // customer can change his own password
         } else {
-            if (body.getFullname() != user.getFullname()) {
+            if (body.getFullname() != user.getFullname() && !body.getFullname().isEmpty() && logedInUser.getUserId() == user.getUserId()) {
                 user.setFullname(body.getFullname());
             }
             // only owner of the account can change password
-            if (body.getPassword() != "" || logedInUser.getUserId() != user.getUserId()) {
+            if ((body.getPassword() != "" || logedInUser.getUserId() == user.getUserId()) && body.getPassword() != null) {
                 user.setPassword(userService.encryptPassword(body.getPassword()));
             }
             if (logedInUser.getRoles().contains(Role.ROLE_ADMIN)) {
-                if (body.getDayLimit() != user.getDayLimit()) {
+                if (body.getDayLimit() != user.getDayLimit() && body.getDayLimit() != null) {
                     user.setDayLimit(body.getDayLimit());
                 }
-                if (body.getTransactionLimit() != user.getTransactionLimit()) {
+                if (body.getTransactionLimit() != user.getTransactionLimit() || body.getTransactionLimit() != null) {
                     user.setTransactionLimit(body.getTransactionLimit());
                 }
                 if (body.getCreateEmployee() == 1) {
@@ -221,7 +259,6 @@ public class UsersApiController implements UsersApi {
             }
         }
         userService.updateUser(user);
-        return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
     public User loggedInUser() {
