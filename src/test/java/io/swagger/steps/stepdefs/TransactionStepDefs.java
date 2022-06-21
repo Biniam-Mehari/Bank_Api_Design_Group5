@@ -10,7 +10,7 @@ import org.springframework.http.*;
 
 public class TransactionStepDefs extends BaseStepDefinations implements En {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTgyNDgzOCwiZXhwIjoxNjU1ODI4NDM4fQ.z1IcTVlTymBRIIS-vyw0GFC9Jk5kaEWoNwjm4lkQWc0";
+    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTgyOTcwNSwiZXhwIjoxNjU1ODMzMzA1fQ.4N_zBCom0PtoT3w62kj2jl-SgXARzyRgxka7kbSEGR0";
     private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NjY3NTk0LCJleHAiOjE2NTYyNzIzOTR9.XI7nat8c9C1oxrLkFydif3C6qtdzIIg6OGoiRcjLr6E";
     private static final String INVALID_TOKEN = "invalidtoken";
 
@@ -31,11 +31,12 @@ public class TransactionStepDefs extends BaseStepDefinations implements En {
         Given("^I have an valid token for role \"([^\"]*)\" to access all transactions of users$", (String role) -> {
              token = VALID_TOKEN_ADMIN;
         });
-        When("^I call the get all transactions endpoint$", () -> {
+
+        When("^I call the get all transactions endpoint with startdate \"([^\"]*)\" and enddate \"([^\"]*)\" and skip (\\d+) and limit (\\d+)$", (String startDate, String endDate, Integer skip, Integer limit) -> {
             httpHeaders.clear();
             httpHeaders.add("Authorization",  "Bearer " + token);
             request = new HttpEntity<>(null, httpHeaders);
-            response = restTemplate.exchange(getBaseUrl() + "bankAPI/transactions?startDate=2022-04-03T10:25:57&endDate=2022-05-27T16:27:39&skip=4&limit=5", HttpMethod.GET, request, String.class);
+            response = restTemplate.exchange(getBaseUrl() + "bankAPI/transactions?startDate=" + startDate + "&endDate=" + endDate + "&skip=" + skip + "&limit=" + limit, HttpMethod.GET, request, String.class);
             status = response.getStatusCodeValue();
         });
 
@@ -74,6 +75,7 @@ public class TransactionStepDefs extends BaseStepDefinations implements En {
         Given("^I have an invalid token for role \"([^\"]*)\" to create transaction$", (String arg0) -> {
             token = INVALID_TOKEN;
         });
+
 
 
     }
