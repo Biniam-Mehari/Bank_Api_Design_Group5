@@ -10,7 +10,7 @@ import org.springframework.http.*;
 
 public class TransactionStepDefs extends BaseStepDefinations implements En {
 
-    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTgyOTcwNSwiZXhwIjoxNjU1ODMzMzA1fQ.4N_zBCom0PtoT3w62kj2jl-SgXARzyRgxka7kbSEGR0";
+    private static final String VALID_TOKEN_USER = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbXJpc2giLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sImlhdCI6MTY1NTgzNTY4MCwiZXhwIjoxNjU1ODM5MjgwfQ.0gRK-pHIjkKSY0Ak3IvkgNXgTXBj8W44G6cAG4xlCzo";
     private static final String VALID_TOKEN_ADMIN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjU1NjY3NTk0LCJleHAiOjE2NTYyNzIzOTR9.XI7nat8c9C1oxrLkFydif3C6qtdzIIg6OGoiRcjLr6E";
     private static final String INVALID_TOKEN = "invalidtoken";
 
