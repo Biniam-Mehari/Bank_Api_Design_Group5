@@ -20,7 +20,7 @@ class TransactionsApiControllerTest {
 
     @BeforeEach
     public void setup() {
-        
+
     }
 
     @Test
