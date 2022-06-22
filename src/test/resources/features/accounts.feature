@@ -31,3 +31,22 @@ Feature: Everything related to accounts
     Then I receive a status code of 200
 
 
+  Scenario: Create account is status OK
+    Given I have an valid token for role "admin" to create account
+    And I gave valid 10 and account type "current"
+    When I call post account
+    Then I receive a status code of 200
+
+  Scenario: Create account when a user have already a current account status conflict
+    Given I have an valid token for role "admin" to create account
+    And I gave valid 5 and account type "current"
+    When I call post account
+    Then I receive a status code of 409
+
+  Scenario: Create account for a user role user status unauthorized
+    Given I have an valid token for role "user" to create account
+    And I gave valid 12 and account type "current"
+    When I call post account
+    Then I receive a status code of 403
+
+

@@ -2,14 +2,12 @@ package io.swagger.steps.stepdefs;
 
 import io.cucumber.core.internal.com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java8.En;
+import io.swagger.model.dto.AccountDTO;
 import io.swagger.service.UserService;
 import io.swagger.steps.BaseStepDefinations;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 
 public class AccountsStepDefs extends BaseStepDefinations implements En {
 
@@ -28,7 +26,7 @@ public class AccountsStepDefs extends BaseStepDefinations implements En {
 
     private String token = null;
 
-    private UserService userService;
+    private AccountDTO accountDTO;
 
     public AccountsStepDefs() {
         Given("^I have an valid token for role \"([^\"]*)\" to access accounts$", (String role) -> {
@@ -96,6 +94,27 @@ public class AccountsStepDefs extends BaseStepDefinations implements En {
             request = new HttpEntity<>(null, httpHeaders);
 
             response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts/" + iban + "/transactions/byamount?amount=900.00&operator==" + operator + "&skip=0&limit=5", HttpMethod.GET, new HttpEntity<>(null,httpHeaders), String.class);
+            status = response.getStatusCodeValue();
+        });
+        Given("^I have an valid token for role \"([^\"]*)\" to create account$", (String user) -> {
+            if(user.equals("admin")){
+                token = VALID_TOKEN_ADMIN;
+            }
+            else if (user.equals("user"))
+                token = VALID_TOKEN_USER;
+        });
+        And("^I gave valid (\\d+) and account type \"([^\"]*)\"$", (Integer userId, String accountType) -> {
+            accountDTO = new AccountDTO();
+            accountDTO.setUserId(userId);
+            accountDTO.setAccountType(accountType);
+        });
+
+        When("^I call post account$", () -> {
+            httpHeaders.clear();
+            httpHeaders.add("Authorization",  "Bearer " + token);
+            httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+            request = new HttpEntity<>(mapper.writeValueAsString(accountDTO), httpHeaders);
+            response = restTemplate.exchange(getBaseUrl() + "bankAPI/accounts", HttpMethod.POST, request, String.class);
             status = response.getStatusCodeValue();
         });
 
