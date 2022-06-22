@@ -86,11 +86,6 @@ class TransactionsApiControllerTest {
     }
 
     @Test
-    public void shouldGetAllTransactionsByTimeStamp() {
-
-    }
-
-    @Test
     void transactionsGet() {
       List<Transaction> allTransactions = transactionService.getAllTransactions(0, 5, localDate2, localDate4);
         assertNotNull(allTransactions);
