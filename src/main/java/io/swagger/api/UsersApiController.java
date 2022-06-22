@@ -10,6 +10,7 @@ import io.swagger.model.dto.*;
 import io.swagger.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.service.AccountService;
+import io.swagger.service.TransactionService;
 import io.swagger.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -29,6 +30,9 @@ import javax.validation.constraints.*;
 import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -174,9 +178,7 @@ public class UsersApiController implements UsersApi {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User does not exist");
         }
         Double totalBalance = userService.getUserTotalBalance(user);
-        if (totalBalance == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User has no account");
-        }
+
         UserTotalBalanceResponseDTO userTotalBalanceResponseDTO = new UserTotalBalanceResponseDTO();
         userTotalBalanceResponseDTO.setTotalBalance(totalBalance);
         return new ResponseEntity<UserTotalBalanceResponseDTO>(userTotalBalanceResponseDTO, HttpStatus.OK);

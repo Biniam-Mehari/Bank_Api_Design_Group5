@@ -34,6 +34,7 @@ class TransactionsApiControllerTest {
 
     Account savingAccountuser2;
     Account currentAccountuser2;
+    Transaction test;
 
     @Autowired
     private TransactionService transactionService;
@@ -80,10 +81,24 @@ class TransactionsApiControllerTest {
             new Transaction(testuser2, "NL01INHO0000000001", "NL05INHO8972164151", 100.00, TransactionType.withdraw, localDate2),
             new Transaction(testuser2, "NL65INHO2095310012", "NL05INHO8972164151", 1200.00, TransactionType.withdraw, localDate4)
         );
+        test =  new Transaction(testuser2, "NL65INHO2095310012", "NL05INHO8972164151", 1200.00, TransactionType.withdraw, localDate4);
+
     }
 
     @Test
     public void shouldGetAllTransactionsByTimeStamp() {
 
+    }
+
+    @Test
+    void transactionsGet() {
+      List<Transaction> allTransactions = transactionService.getAllTransactions(0, 5, localDate2, localDate4);
+        assertNotNull(allTransactions);
+    }
+
+    @Test
+    void transactionsPost() {
+        Transaction transaction = transactionService.createTransaction(test);
+        assertNotNull(transaction);
     }
 }

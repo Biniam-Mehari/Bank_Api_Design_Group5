@@ -64,12 +64,12 @@ public class AccountsApiController implements AccountsApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> closeAccount(@Size(min = 18, max = 18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required = true, schema = @Schema()) @PathVariable("IBAN") String IBAN) {
 
-        Account account = new Account();
-        if(!account.validateIBAN(IBAN)){
+
+        if(!validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
         //receiving the account form database
-        account = accountService.findByIBAN(IBAN);
+       Account account = accountService.findByIBAN(IBAN);
 
 
         if (account.getAccountId()==1){
@@ -80,7 +80,7 @@ public class AccountsApiController implements AccountsApi {
                 if(savingAccounts.isEmpty()){
                     accountService.closeAccount(account);
                 }else {
-                    throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You can not delete your currect account if you have a saving account.");
+                    throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You can not close your currect account if you have a saving account.");
                 }
             }
             else {
@@ -95,11 +95,11 @@ public class AccountsApiController implements AccountsApi {
         User user = loggedInUser();
 
         //receiving the account form database
-        Account account = new Account();
-        if(!account.validateIBAN(IBAN)){
+
+        if(!validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
-        account = accountService.findByIBAN(IBAN);
+       Account account = accountService.findByIBAN(IBAN);
 
         //check if the user is owner of the account or admin(employee)
         if(user.getRoles().contains(Role.ROLE_ADMIN) || user.getAccounts().contains(account)){
@@ -133,11 +133,11 @@ public class AccountsApiController implements AccountsApi {
             }
         }
         //receiving the account form database
-        Account account = new Account();
-        if(!account.validateIBAN(IBAN)){
+
+        if(!validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
-        account = accountService.findByIBAN(IBAN);
+       Account account = accountService.findByIBAN(IBAN);
 
         if(user != account.getUser()) {
             if (!user.getRoles().contains(Role.ROLE_ADMIN)) {
@@ -288,11 +288,11 @@ public class AccountsApiController implements AccountsApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateAbsoluteLimitPost(@Size(min=18,max=18) @Parameter(in = ParameterIn.PATH, description = "IBAN of a user", required=true, schema=@Schema()) @PathVariable("IBAN") String IBAN, @Valid @RequestBody AbsoluteLimitDTO body) {
 
-        Account account = new Account();
-        if(!account.validateIBAN(IBAN)){
+
+        if(!validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
-         account = accountService.findByIBAN(IBAN);
+        Account account = accountService.findByIBAN(IBAN);
         account.setAbsoluteLimit(body.getAbsoluteLimit());
 
         accountService.saveAccount(account);
@@ -311,11 +311,11 @@ public class AccountsApiController implements AccountsApi {
 
         User user = loggedInUser();
 
-        Account account = new Account();
-        if(!account.validateIBAN(IBAN)){
+
+        if(!validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
-        account = accountService.findByIBAN(IBAN);
+        Account account = accountService.findByIBAN(IBAN);
 
         if (account == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
@@ -356,11 +356,11 @@ public class AccountsApiController implements AccountsApi {
 
       User user = loggedInUser();
 
-        Account userAccount = new Account();
-        if(!userAccount.validateIBAN(IBAN)){
+
+        if(!validateIBAN(IBAN)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid IBAN");
         }
-        userAccount = accountService.findByIBAN(IBAN);
+        Account  userAccount = accountService.findByIBAN(IBAN);
         userAccount.setIBAN(IBAN);
 
         if (userAccount == null)
@@ -393,6 +393,17 @@ public class AccountsApiController implements AccountsApi {
         }
 
         return new ResponseEntity<List<TransactionResponseDTO>>(transactionResponseDTOS, HttpStatus.OK);
+    }
+
+    //check valid iban
+    public boolean validateIBAN(String IBAN){
+        // validate IBAN for correct format
+        if(IBAN.substring(0,2).equals("NL") && IBAN.substring(2,4).matches("[0-9]+") && IBAN.substring(4,8).equals("INHO") && IBAN.substring(8,18).matches("[0-9]+")){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
 }

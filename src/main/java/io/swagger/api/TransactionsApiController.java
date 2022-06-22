@@ -26,6 +26,7 @@ import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,17 +124,15 @@ public class TransactionsApiController implements TransactionsApi {
     }
 
     public void validateFromAccountAndToAccount(TransactionDTO dto, User user) {
-        Account fromAccount = new Account();
-        Account toAccount = new Account();
 
-        if (!fromAccount.validateIBAN(dto.getFromAccount()))
+        if (!validateIBAN(dto.getFromAccount()))
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid IBAN format");
 
-        if (!toAccount.validateIBAN(dto.getToAccount()))
+        if (!validateIBAN(dto.getToAccount()))
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid IBAN format");
 
-        fromAccount = accountService.findByIBAN(dto.getFromAccount());
-        toAccount = accountService.findByIBAN(dto.getToAccount());
+        Account fromAccount = accountService.findByIBAN(dto.getFromAccount());
+        Account toAccount = accountService.findByIBAN(dto.getToAccount());
 
         if (fromAccount == null || toAccount == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "account not found");
@@ -156,19 +155,22 @@ public class TransactionsApiController implements TransactionsApi {
         }
 
         deductMoneyFromAccountAndUpdateBalance(fromAccount, dto, user);
-        //update remainingdaylimit
-        User userFromAccount = userService.getUserModelById(fromAccount.getUser().getUserId());
-        userFromAccount.setRemainingDayLimit(userFromAccount.getRemainingDayLimit()-dto.getAmount());
-        userService.updateUser(userFromAccount);
 
         addMoneyToAccountAndUpdateBalance(toAccount, dto.getAmount());
     }
 
     public void deductMoneyFromAccountAndUpdateBalance(Account fromAccount, TransactionDTO transactionDTO, User user) {
-        //todo: this check needs to be changed and work with query
-        if (transactionDTO.getAmount() > user.getRemainingDayLimit()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your day limit");
+        LocalDate date = LocalDate.now();
+        LocalDateTime startOfDay = LocalDateTime.of(date, LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.of(date, LocalTime.MAX);
+        Double dayLimitUsed = transactionService.getAmountTranferdPerDay(fromAccount.getIBAN(),startOfDay,endOfDay);
+        if(dayLimitUsed != null){
+            double totalAmountTranferWithTheCurrent = transactionDTO.getAmount() + dayLimitUsed;
+            if (totalAmountTranferWithTheCurrent > user.getDayLimit()) {
+                throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your day limit");
+            }
         }
+
 
         if (transactionDTO.getAmount() > user.getTransactionLimit()) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "cannot transfer funds! you have exceed your transaction limit");
@@ -225,6 +227,16 @@ public class TransactionsApiController implements TransactionsApi {
         transactionResponseDTO.setTransactionType(storeTransaction.getTransactionType().toString());
         transactionResponseDTO.setTimestamp(storeTransaction.getTimestamp());
         return transactionResponseDTO;
+    }
+
+    public boolean validateIBAN(String IBAN){
+        // validate IBAN for correct format
+        if(IBAN.substring(0,2).equals("NL") && IBAN.substring(2,4).matches("[0-9]+") && IBAN.substring(4,8).equals("INHO") && IBAN.substring(8,18).matches("[0-9]+")){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
 

@@ -24,7 +24,7 @@ public class UserResponseDTO {
 
     private Double dayLimit;
     private Double transactionLimit;
-    private Double remainingDayLimit;
+
 
     public void setUser(User newUser) {
         this.userId = newUser.getUserId();
@@ -33,6 +33,5 @@ public class UserResponseDTO {
         this.roles = newUser.getRoles();
         this.dayLimit = newUser.getDayLimit();
         this.transactionLimit = newUser.getTransactionLimit();
-        this.remainingDayLimit = newUser.getRemainingDayLimit();
     }
 }

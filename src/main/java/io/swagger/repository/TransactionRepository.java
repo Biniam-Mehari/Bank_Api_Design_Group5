@@ -4,6 +4,9 @@ package io.swagger.repository;
 import io.swagger.model.Transaction;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -26,8 +29,9 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
     @Query(value = "SELECT * FROM Transaction WHERE amount =:amount AND from_Account =:IBAN Or to_Account =:IBAN ORDER BY TRANSACTION_ID OFFSET :skip ROWS FETCH NEXT :limit ROWS ONLY", nativeQuery = true)
     List<Transaction> findAllTransactionsEqualToAmount(Double amount, String IBAN, int skip, int limit);
 
-    @Query("select sum(transaction.amount) from Transaction transaction where transaction.fromAccount =:fromaccount And transaction.timestamp =:dateOfToday")
-            Double transactionBalanceOfOneDay(Date dateOfToday);
+
+    @Query(value = "SELECT SUM(amount) FROM Transaction WHERE from_Account =:iban and timestamp between :startDay and :endDay", nativeQuery = true)
+        Double getSumOfAllTransaction(String iban, LocalDateTime startDay, LocalDateTime endDay);
 
     @Query(value = "SELECT * FROM Transaction WHERE from_Account =:IBAN ORDER BY TRANSACTION_ID OFFSET :skip ROWS FETCH NEXT :limit ROWS ONLY", nativeQuery = true)
     List<Transaction> findAllByFromAccount(String IBAN, int skip, int limit);

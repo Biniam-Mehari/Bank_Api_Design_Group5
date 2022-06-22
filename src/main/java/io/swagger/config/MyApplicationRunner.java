@@ -54,7 +54,7 @@ public class MyApplicationRunner implements ApplicationRunner {
                 new Account("NL01INHO0000000001",bank, 100000000.00, AccountType.current),
                 new Account("NL21INHO0123400081",user2, 50.00, AccountType.saving),
                 new Account("NL21INHO0123400789",user2, 750.00, AccountType.current),
-                new Account("NL51INHO0123400029",user3, 2000.00, AccountType.current),
+                new Account("NL51INHO0123400029",user3, 4000.00, AccountType.current),
                 new Account("NL30INHO0123400157",user3, 50.00, AccountType.saving),
                 new Account("NL21INHO0123400233",user4, 750.00, AccountType.current),
                 new Account("NL51INHO0123400455",user1, 2000.00, AccountType.current)

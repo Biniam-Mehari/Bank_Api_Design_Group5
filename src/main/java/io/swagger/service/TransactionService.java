@@ -77,4 +77,8 @@ public class TransactionService {
          return transactionRepository.findAllByToAccount(IBAN, skip, limit);
 
     }
+
+    public Double getAmountTranferdPerDay(String iban,LocalDateTime startDay,LocalDateTime endDay){
+        return transactionRepository.getSumOfAllTransaction(iban,startDay,endDay);
+    }
 }

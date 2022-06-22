@@ -65,16 +65,7 @@ public class Account{
     return iban;
   }
 
-  //check valid iban
-  public boolean validateIBAN(String IBAN){
-    // validate IBAN for correct format
-    if(IBAN.substring(0,2).equals("NL") && IBAN.substring(2,4).matches("[0-9]+") && IBAN.substring(4,8).equals("INHO") && IBAN.substring(8,18).matches("[0-9]+")){
-      return true;
-    }
-    else{
-      return false;
-    }
-  }
+
 
 
 

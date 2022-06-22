@@ -15,8 +15,6 @@ import org.springframework.validation.annotation.Validated;
 @NoArgsConstructor
 public class UpdateDayAndTransactionLimitDTO   {
 
-//    @JsonProperty("userId")
-//    private Integer userId = null;
 
     @JsonProperty("dayLimit")
     private Double dayLimit = null;
