@@ -202,7 +202,7 @@ public class UsersApiController implements UsersApi {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User does not exist");
         }
         // if user wants to change password of onother user than himself return forbidden
-        if (logedInUser.getUserId() != userId && !body.getPassword().isEmpty()) {
+        if (logedInUser.getUserId() != userId && body.getPassword() != null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to change another users his password");
         }
         // if role is user only and createEmployee is 1 return forbidden
@@ -210,7 +210,7 @@ public class UsersApiController implements UsersApi {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to create an employee");
         }
         // if user is changing another users fullname return forbidden
-        if (logedInUser.getUserId() != userId && !body.getFullname().isEmpty()) {
+        if (logedInUser.getUserId() != userId && body.getFullname() != null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not allowed to change another users fullname");
         }
         // if role is user only and transactionLimit is not null return forbidden
