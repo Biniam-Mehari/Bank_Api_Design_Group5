@@ -29,6 +29,7 @@ import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -125,8 +126,9 @@ public class AccountsApiController implements AccountsApi {
 
         if (startDate.equals(null) || endDate.equals(null)) {
             if (startDate.equals(null) && endDate.equals(null)) {
-                LocalDate startdate = LocalDate.now();
-                LocalDate enddate = LocalDate.now();
+                LocalDate today = LocalDate.now();
+                LocalDateTime startdate = LocalDateTime.of(today, LocalTime.MIN);
+                LocalDateTime enddate = LocalDateTime.of(today, LocalTime.MAX);
             }
             else {
                 throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "date range must be specified");
@@ -147,11 +149,13 @@ public class AccountsApiController implements AccountsApi {
         LocalDateTime startdate;
         LocalDateTime enddate;
         try {
-            startdate = LocalDateTime.parse(startDate);
-            enddate = LocalDateTime.parse(endDate);
+            LocalDate fromdate = LocalDate.parse(startDate);
+            LocalDate todate = LocalDate.parse(endDate);
+            startdate = LocalDateTime.of(fromdate, LocalTime.MIN);
+             enddate = LocalDateTime.of(todate, LocalTime.MAX);
         }
         catch (Exception ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid date format, needs to be in yyyy-MM-ddTHH:mm:ss");
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Invalid date format, needs to be in yyyy-MM-dd");
         }
 
         List<Transaction> transactions = transactionService.
@@ -257,17 +261,16 @@ public class AccountsApiController implements AccountsApi {
             if(checkifCurrentAccountExist(user)){
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have current account");
             }
-            account = accountService.saveAccount(account);
         }
         else{
             List<Account> accounts = accountService.findAllByUserAndAccountType(user,AccountType.current);
-            if (!accounts.isEmpty()){
-                account = accountService.saveAccount(account);
-            }
-            else
+            if (accounts.isEmpty()){
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "To make saving account first you need to make current account");
-        }
-        Account accountRegistered = accountService.findByIBAN(account.getIBAN());
+
+            }
+                 }
+        Account accountRegistered = accountService.saveAccount(account);
+
 
         return changeAccoutToAccountResponseDTO(accountRegistered);
     }

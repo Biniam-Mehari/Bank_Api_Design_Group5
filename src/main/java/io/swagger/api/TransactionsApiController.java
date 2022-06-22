@@ -73,8 +73,10 @@ public class TransactionsApiController implements TransactionsApi {
         LocalDateTime enddate;
 
         try {
-            startdate = LocalDateTime.parse(startDate);
-            enddate = LocalDateTime.parse(endDate);
+            LocalDate fromdate = LocalDate.parse(startDate);
+            LocalDate todate = LocalDate.parse(endDate);
+            startdate = LocalDateTime.of(fromdate, LocalTime.MIN);
+            enddate = LocalDateTime.of(todate, LocalTime.MAX);
         }
         catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "date needs to be in format yyyy-MM-dd");
