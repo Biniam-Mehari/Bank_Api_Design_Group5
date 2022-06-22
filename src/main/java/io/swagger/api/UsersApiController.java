@@ -178,7 +178,10 @@ public class UsersApiController implements UsersApi {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User does not exist");
         }
         Double totalBalance = userService.getUserTotalBalance(user);
-
+// todo: check if totalBalance is null
+//        if (totalBalance == null) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User has no account");
+//        }
         UserTotalBalanceResponseDTO userTotalBalanceResponseDTO = new UserTotalBalanceResponseDTO();
         userTotalBalanceResponseDTO.setTotalBalance(totalBalance);
         return new ResponseEntity<UserTotalBalanceResponseDTO>(userTotalBalanceResponseDTO, HttpStatus.OK);

@@ -49,7 +49,7 @@ class UsersApiControllerTest {
     }
 
     @Test
-    void canRetriveUserByID() {
+    void canRetrieveUserByID() {
         User user = userService.getUserModelById(1);
         assertEquals(user.getUserId(), testuser1.getUserId());
     }
@@ -78,5 +78,21 @@ class UsersApiControllerTest {
     public void canPostANewUser() {
         User user = userService.createUser("john12", "john doe", "secret", 0);
         assertEquals(user.getUsername(), "john12");
+    }
+
+    // test if i can get user by username
+    @Test
+    public void canGetUserByUsername() {
+        User user = userService.getUserByUsername("amrish");
+        assertEquals(user.getUsername(), "amrish");
+    }
+
+    // test if i can get total balance of user
+    @Test
+    public void canGetTotalBalanceOfUser() {
+        User user = userService.getUserByUsername("amrish");
+        Double balance = userService.getUserTotalBalance(user);
+        // check if balance is not null
+        assertNotNull(balance);
     }
 }

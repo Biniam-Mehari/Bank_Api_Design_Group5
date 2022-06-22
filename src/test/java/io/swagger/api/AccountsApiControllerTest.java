@@ -72,4 +72,19 @@ class AccountsApiControllerTest {
         assertNotNull(accounts);
     }
 
+    // test to get account by IBAN
+    @Test
+    public void shouldFindAccountByIBAN() {
+        Account account = accountService.findByIBAN("NL51INHO0123400029");
+        assertEquals(account.getIBAN(), "NL51INHO0123400029");
+    }
+
+    // test if account status is changed to closed
+    @Test
+    public void shouldCloseAccount() {
+        Account account = accountService.findByIBAN("NL51INHO0123400029");
+        accountService.closeAccount(account);
+        account = accountService.findByIBAN("NL51INHO0123400029");
+        assertEquals(account.getStatus(), "closed");
+    }
 }
